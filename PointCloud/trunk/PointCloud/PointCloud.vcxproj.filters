@@ -1,0 +1,203 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ANN\ANN.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\bd_fix_rad_search.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\bd_pr_search.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\bd_search.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\bd_tree.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\brute.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CellData.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_dump.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_fix_rad_search.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_pr_search.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_search.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_split.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_tree.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_util.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrm.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\perf.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PointCloud.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PointCloudDoc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PointCloudView.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PointSet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SimplyParamDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NumericalC\SVD.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Common.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\ANN.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\ANNperf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\ANNx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\array3d.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\bd_tree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CellData.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NumericalC\jacobi.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_fix_rad_search.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_pr_search.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_search.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_split.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_tree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NumericalC\nrutil.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloud.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloudDoc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloudView.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PointSet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\pr_queue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\pr_queue_k.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SimplyParamDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="NumericalC\SVD.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\vect.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\PointCloud.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\PointCloud.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\PointCloudDoc.ico">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\Toolbar.bmp">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="PointCloud.reg" />
+    <None Include="ReadMe.txt" />
+    <None Include="ClassDiagram1.cd" />
+    <None Include="ClassDiagram2.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PointCloud.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
