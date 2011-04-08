@@ -83,86 +83,71 @@ bool AdvancingFront::join(CFrontEdge& edge, int vertIdx, PointSet* ps, float bal
 
 bool AdvancingFront::join( CFrontEdge& edge, int vertIdx, vector<short>& m_bPointUsed, CTriangle* newTriangle )
 {
+	assert(edge.getA() != vertIdx);
+	assert(edge.getB() != vertIdx);
+
 	typedef list<CFrontEdge>::iterator IT;
-	list<IT> itListA, itListB;
+	IT itA = m_edgeList.end(), itB = itA;
 	IT it = m_edgeList.begin();
+	int iVertIdxOnFront = 0;
+
 	for (; it != m_edgeList.end(); ++it)
 	{
-		if (vertIdx == it->getA()){
-			itListA.push_back(it);
-		} else if (vertIdx == it->getB()) {
-			itListB.push_back(it);
+		if (it->getA() == vertIdx || it->getB()==vertIdx){
+			iVertIdxOnFront++;	// 最优点在波前边上
+			if (it->getB() == edge.getA() )
+				itA = it;		// 存在合并边Glue Edge(A, V)
+			else if (it->getA() == edge.getB() )
+				itB = it;		// 存在合并边Glue Edge(V, B)
 		}
 	}
-	newTriangle->setTriVertexs(edge.getA(), vertIdx, edge.getB());
 	// 设置两个三角形的相邻关系
+	newTriangle->setTriVertexs(edge.getA(), vertIdx, edge.getB());
 	edge.getPreTriangle()->setNeighbor(edge, newTriangle);
 	newTriangle->setNeighbor(vertIdx, edge.getPreTriangle());
 
-	if (itListA.empty() && itListB.empty()) {	// vertIdx不在波前边上
-		m_vertexList.push_back(vertIdx);
-		m_bPointUsed[vertIdx] = FRONTPOINT;
+	if (itA == itB) {	// vertIdx不在波前边上|vertIdx在波前边上但没有要合并的边
+		if (iVertIdxOnFront == 0){	// 不在波前边上才需要添加
+			m_vertexList.push_back(vertIdx);
+			m_bPointUsed[vertIdx] = FRONTPOINT;
+		}
 		CFrontEdge a(edge.getA(), vertIdx), b(vertIdx, edge.getB());
 		a.setPreTriangle(newTriangle);
 		b.setPreTriangle(newTriangle);
 		m_edgeList.push_back(a);
 		m_edgeList.push_back(b);
 		m_edgeList.remove(edge);
-	} else {	// vertIdx在波前边上
-		list<IT>::iterator itt = itListA.begin();
-		int iGlue = 0;
-		int iPt = -1;
-		for (; itt != itListA.end(); ++itt)
-		{
-			CFrontEdge e = *(*itt);
-			if (e.getB() == edge.getA()){	// AV == e'vb
-				e.getPreTriangle()->setNeighbor(e, newTriangle);
-				newTriangle->setNeighbor(edge.getB(), e.getPreTriangle());
+	} else {	// vertIdx在波前边上且存在需要合并的边
+		if (itA != m_edgeList.end()){
+			newTriangle->setNeighbor(vertIdx, itA->getPreTriangle());
+			itA->getPreTriangle()->setNeighbor(*itA, newTriangle);
 
-				m_edgeList.remove(e);
-				m_vertexList.remove(edge.getA());
-				m_bPointUsed[edge.getA()] = INPOINT;
-				iGlue++;
-				break;
-			} else if (e.getB() == edge.getB()){	// VB ==e'vb
-				e.getPreTriangle()->setNeighbor(e, newTriangle);
-				newTriangle->setNeighbor(edge.getA(), e.getPreTriangle());
-
-				m_edgeList.remove(e);
-				m_vertexList.remove(edge.getB());
-				m_bPointUsed[edge.getB()] = INPOINT;
-				iGlue++;
-				break;
-			}
+			m_edgeList.remove(*itA);
+			m_vertexList.remove(edge.getA());
+			m_bPointUsed[edge.getA()] = INPOINT;	// A 为内点
+		} else {
+			CFrontEdge a(edge.getA(), vertIdx);
+			a.setPreTriangle(newTriangle);
+			m_edgeList.push_back(a);
 		}
-		for (itt = itListB.begin(); itt != itListB.end(); ++itt){
-			CFrontEdge e = *(*itt);
-			if (e.getA() == edge.getA()){	// AV == e'av
-				e.getPreTriangle()->setNeighbor(e, newTriangle);
-				newTriangle->setNeighbor(edge.getB(), e.getPreTriangle());
+		if (itB != m_edgeList.end()){
+			newTriangle->setNeighbor(vertIdx, itB->getPreTriangle());
+			itB->getPreTriangle()->setNeighbor(*itB, newTriangle);
 
-				m_edgeList.remove(e);
-				m_vertexList.remove(edge.getA());
-				m_bPointUsed[edge.getA()] = INPOINT;
-				iGlue++;
-				break;
-			} else if (e.getA() == edge.getB()){	// VB ==e'av
-				e.getPreTriangle()->setNeighbor(e, newTriangle);
-				newTriangle->setNeighbor(edge.getA(), e.getPreTriangle());
-
-				m_edgeList.remove(e);
-				m_vertexList.remove(edge.getB());
-				m_bPointUsed[edge.getB()] = INPOINT;
-				iGlue++;
-				break;
-			}
+			m_edgeList.remove(*itB);
+			m_vertexList.remove(edge.getB());
+			m_bPointUsed[edge.getB()] = INPOINT;		// B 为内点
+		} else {
+			CFrontEdge b(vertIdx, edge.getB());
+			b.setPreTriangle(newTriangle);
+			m_edgeList.push_back(b);
 		}
-		// TODO 同时Glue的也要是两条这样vertIdx才是内点
-		if ((itListA.size() +itListB.size()) == 2 && iGlue == 2){
+		m_bPointUsed[vertIdx] = FRONTPOINT;
+		// TODO 同时合并两条并且连接此点的线段为2，这样vertIdx才是内点
+		if (iVertIdxOnFront == 2 && itA != m_edgeList.end() && itB != m_edgeList.end()){
 			m_vertexList.remove(vertIdx);
 			m_bPointUsed[vertIdx] = INPOINT;
 		}
-		// TODO 未添加需要插入的新边
 		m_edgeList.remove(edge);
 	}
 	return true;
@@ -208,10 +193,10 @@ void CMesh::writeToFile(char* pFileName)
 		}
 	}
 }
-
+//@ 不计算start,从start下一个开始
 int CMesh::getFirstUnusedPt( int start /*= 0*/ )
 {
-	for (int i = start; i < m_ps->m_pointN ; i++)
+	for (int i = start+1; i < m_ps->m_pointN ; i++)
 	{
 		if (m_bPointUsed[i] == UNUSEDPOINT)
 			return i;
@@ -223,6 +208,56 @@ int CMesh::getFirstUnusedPt( int start /*= 0*/ )
 	}
 	return -1;	// 全部已经使用了
 }
+
+void CMesh::faceNormal()
+{
+	int nFaces = m_faceVects.size();
+	float** ps = m_ps->m_point;
+	int iA, iB, iC;
+	float* ptA, *ptB, *ptC;
+
+	vector<CTriangle*>::iterator it = m_faceVects.begin();
+	for (; it != m_faceVects.end(); ++it)
+	{
+			iA = (*it)->getA();
+			iB = (*it)->getB();
+			iC = (*it)->getC();
+			ptA = ps[iA];
+			ptB = ps[iB];
+			ptC = ps[iC];
+			vect3f AB(ptB[0]-ptA[0], ptB[1]-ptA[1], ptB[2]-ptA[2]),
+				AC(ptC[0]-ptA[0], ptC[1]-ptA[1], ptC[2]-ptA[2]);
+			AB.cross(AC);
+			m_faceNorms.push_back(AB);
+	}
+}
+
+void CMesh::filpFaceNorm()
+{
+	vector<vect3f>::iterator it = m_faceNorms.begin();
+	for (; it != m_faceNorms.end(); ++it)
+	{
+		it->negative();
+	}
+}
+
+int CMesh::checkHoles()
+{
+	int hole = 0;
+	vector<CTriangle*>::iterator it = m_faceVects.begin();
+	for (; it!= m_faceVects.end(); ++it)
+	{
+		CTriangle* pFace = *it;
+		CTriangle *pFA = NULL, *pFB = NULL, *pFC=NULL;
+		pFA = pFace->iNeighbor(0);
+		pFB = pFace->iNeighbor(1);
+		pFC = pFace->iNeighbor(2);
+		if (pFA == NULL || pFB == NULL || pFC==NULL)
+			hole++;
+	}
+	return hole;
+}
+
 //==================CBPAMESH====================
 
 inline float veccos(float* a, float* b){
@@ -275,8 +310,9 @@ bool CBpaMesh::findSeedTriange( CTriangle& face, float ballCenter[3] )
 	ANNdistArray dists = new ANNdist[m_K+1];
 	ANNkd_tree* tree = m_ps->m_kdTree;
 	int ballNeigIdx[4];
-
-	while ((idxA = getFirstUnusedPt(idxA+1))!=-1) // 找到第一个点A
+	//TODO 此处可能造成死循环 当未使用的点很少时,会出现这种问题,
+	//TODO 解决方法:判断idx是否将未使用点计算一遍
+	while ((idxA = getFirstUnusedPt(idxA))!=-1) // 找到第一个点A
 	{
 		ANNpoint queryA = m_ps->m_point[idxA];
 		tree->annkSearch(queryA, m_K+1, nnIdx, dists, 1e-6); // 找A点的邻域
@@ -699,11 +735,13 @@ bool CIPDMesh::findSeedTriangle( CTriangle& face, int K )
 
 bool CIPDMesh::findSeedTriangle2( CTriangle*& pFace, int K )
 {
-	int seedA = -1;
+	int seedA = getFirstUnusedPt(-1), firstSeed = seedA;
 	ANNidxArray nnidx = new ANNidx[K+1];
 	ANNdistArray dists = new ANNdist[K+1];
 
-	while ( (seedA = getFirstUnusedPt(seedA+1)) != -1 ){
+	//TODO 此处可能造成死循环 当未使用的点很少时,会出现这种问题,
+	//TODO 解决方法:判断idx是否将未使用点计算一遍
+	while ( seedA  != -1 ){
 		float* ptA = m_ps->m_point[seedA];
 		m_ps->m_kdTree->annkSearch(ptA, K+1, nnidx, dists);
 
@@ -749,6 +787,9 @@ bool CIPDMesh::findSeedTriangle2( CTriangle*& pFace, int K )
 				return true;
 			}
 		}
+		seedA = getFirstUnusedPt(seedA);
+		if (seedA == firstSeed)
+			break;
 	}
 	delete[] nnidx;
 	delete[] dists;
@@ -771,7 +812,8 @@ bool CIPDMesh::getBestPt( CFrontEdge& frontEdge, int& bestIdx, const int& K )
 	int idxC = -1;
 
 //#define MINTRIANGEL  0.1339745962	// 1-cos(30') 即三角形最小内角要大于30'
-#define MINTRIANGEL  0.0603073792	// 1-cos(20') 即三角形最小内角要大于20'
+//#define MINTRIANGEL  0.0603073792	// 1-cos(20') 即三角形最小内角要大于20'
+#define MINTRIANGEL  0.09369221296335	// 1-cos(20') 即三角形最小内角要大于25'
 #define MAXDIHEDRALANGEL 1.8660254 // 1-cos(150') 即二面角最大为150'
 	int idxPre = frontEdge.getPreTriangle()->getVertex(frontEdge);
 	for (int i=1; i < K+1 ; i++)
@@ -802,6 +844,13 @@ bool CIPDMesh::getBestPt( CFrontEdge& frontEdge, int& bestIdx, const int& K )
 }
 
 void CIPDMesh::start(){
+#define OUTFACEFILE
+#ifdef OUTFACEFILE
+	const char* facePath = "face.ply";
+	ofstream faceFile(facePath);
+	if (!faceFile) return ;
+#endif
+
 	CTriangle* pFace = NULL;
 	std::list<CFrontEdge>::iterator itEdge;
 	int vertIdx;
@@ -814,6 +863,9 @@ void CIPDMesh::start(){
 				CTriangle* newTri = new CTriangle;
 				m_front.join(*itEdge, vertIdx, m_bPointUsed, newTri);
 				m_faceVects.push_back(newTri);
+#ifdef OUTFACEFILE
+				faceFile<< newTri->getA()<<" "<<newTri->getB()<<" "<<newTri->getC()<<"\n";
+#endif
 			}else{
 				itEdge->setBoundary();
 			}
@@ -835,4 +887,7 @@ void CIPDMesh::start(){
 			return ;
 		}
 	}
+#ifdef OUTFACEFILE
+	faceFile.close();
+#endif
 }

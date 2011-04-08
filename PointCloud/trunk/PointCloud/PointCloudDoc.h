@@ -52,5 +52,6 @@ protected:
 public:
 	afx_msg void OnEditSimply();
 	afx_msg void OnMesh();
+	afx_msg void OnEditFlip();
 };
 #endif

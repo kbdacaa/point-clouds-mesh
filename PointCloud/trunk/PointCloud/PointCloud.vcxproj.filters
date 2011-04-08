@@ -192,8 +192,6 @@
     </None>
     <None Include="PointCloud.reg" />
     <None Include="ReadMe.txt" />
-    <None Include="ClassDiagram1.cd" />
-    <None Include="ClassDiagram2.cd" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PointCloud.rc">

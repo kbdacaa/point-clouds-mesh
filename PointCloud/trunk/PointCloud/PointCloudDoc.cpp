@@ -20,6 +20,7 @@ BEGIN_MESSAGE_MAP(CPointCloudDoc, CDocument)
 	ON_COMMAND(ID_FILE_OPEN, &CPointCloudDoc::OnFileOpen)
 	ON_COMMAND(ID_EDIT_SIMPLY, &CPointCloudDoc::OnEditSimply)
 	ON_COMMAND(ID_MESH, &CPointCloudDoc::OnMesh)
+	ON_COMMAND(ID_EDIT_FLIP, &CPointCloudDoc::OnEditFlip)
 END_MESSAGE_MAP()
 
 // CPointCloudDoc ¹¹Ôì/Îö¹¹
@@ -145,6 +146,18 @@ void CPointCloudDoc::OnMesh()
 	if (ps != NULL){
 		mesh = new CIPDMesh(ps);
 		mesh->start();
+		mesh->faceNormal();
+		int hole = mesh->checkHoles();
+		TRACE("There are %d holes!",hole);
 		mode = MESHMODE;
+		drawData();
+	}
+}
+
+void CPointCloudDoc::OnEditFlip()
+{
+	if (mesh != NULL){
+		mesh->filpFaceNorm();
+		drawData();
 	}
 }

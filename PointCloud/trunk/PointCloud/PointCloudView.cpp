@@ -435,10 +435,13 @@ void CPointCloudView::drawMesh( CMesh* mesh )
 	glShadeModel(GL_SMOOTH);
 	int nFace = mesh->m_faceVects.size();
 	float** ps = mesh->m_ps->m_point;
+
 	for (int i = 0; i < nFace ; i++)
 	{
 		CTriangle* face = mesh->m_faceVects.at(i);
+		vect3f norm = mesh->m_faceNorms.at(i);
 		glBegin(GL_TRIANGLES);
+			glNormal3f(norm[0], norm[1], norm[2]);
 			glVertex3fv(ps[face->getA()]);
 			glVertex3fv(ps[face->getB()]);
 			glVertex3fv(ps[face->getC()]);
