@@ -88,6 +88,7 @@ public:
 	bool join(CFrontEdge& edge, int vertIdx, std::vector<short>& m_bPointUsed, CTriangle* newTriangle);
 private:
 	std::list<CFrontEdge> m_edgeList;	//+波前边链表+
+	std::list<CFrontEdge> m_boundaryEdge;	//+边界边链表+
 	std::list<int> m_vertexList;	//+波前边上顶点链表+
 };
 // TODO:: 需要相邻三角面的指针
@@ -144,6 +145,9 @@ public:
 		else if (idx == m_c) return m_pNeighbor[2];
 		return NULL;
 	}
+	 CTriangle* iNeighbor(int index) const{
+		 return m_pNeighbor[index];
+	 }
 
 private:
 	int m_a, m_b, m_c;	// 三角形的三个顶点
@@ -155,6 +159,7 @@ class CMesh
 public:
 	PointSet* m_ps;
 	std::vector<CTriangle*> m_faceVects;
+	std::vector<vect3f> m_faceNorms;
 // 	std::list<CTriangle> m_triList;
 	AdvancingFront m_front;
 	//std::vector<bool> m_bPointUsed;	// 点是否被使用的标志
@@ -166,6 +171,10 @@ public:
 public:
 	virtual void start() = 0;
 	virtual void writeToFile(char* pFileName);
+	void faceNormal();
+	void filpFaceNorm();
+	int checkHoles();
+
 	/* 返回从起始点开始的第一个未被使用的点序号，如果未找到返回-1
 		start为查找起始点	*/
 	int  getFirstUnusedPt(int start = 0);

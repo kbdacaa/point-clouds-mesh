@@ -180,8 +180,6 @@
     <ClInclude Include="Common\vect.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClassDiagram1.cd" />
-    <None Include="ClassDiagram2.cd" />
     <None Include="res\PointCloud.ico" />
     <None Include="res\PointCloud.rc2" />
     <None Include="res\PointCloudDoc.ico" />

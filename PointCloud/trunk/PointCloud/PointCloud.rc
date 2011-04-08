@@ -83,7 +83,7 @@ BEGIN
     BUTTON      ID_FILE_OPEN
     BUTTON      ID_FILE_SAVE
     SEPARATOR
-    BUTTON      ID_EDIT_CUT
+    BUTTON      ID_EDIT_FLIP
     BUTTON      ID_EDIT_COPY
     BUTTON      ID_EDIT_PASTE
     SEPARATOR
@@ -115,7 +115,7 @@ BEGIN
         MENUITEM "精简(&J)\tCtrl+J",              ID_EDIT_SIMPLY
         MENUITEM SEPARATOR
         MENUITEM "网格化(&M)\tCtrl+M",             ID_MESH
-        MENUITEM "剪切(&T)\tCtrl+X",              ID_EDIT_CUT
+        MENUITEM "面法矢逆向(&F)\tCtrl+F",           ID_EDIT_FLIP
         MENUITEM "复制(&C)\tCtrl+C",              ID_EDIT_COPY
         MENUITEM "粘贴(&P)\tCtrl+V",              ID_EDIT_PASTE
     END
@@ -369,6 +369,7 @@ BEGIN
     ID_EDIT_SIMPLY          "对点云进行精简\n精简"
     ID_32772                "对点云进行网格化"
     ID_MESH                 "对点云进行网格化"
+    ID_EDIT_FLIP            "将面法矢逆向"
 END
 
 #endif    // 中文(简体，中国) resources
