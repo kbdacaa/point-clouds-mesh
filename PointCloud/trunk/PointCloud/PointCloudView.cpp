@@ -440,8 +440,9 @@ void CPointCloudView::drawMesh( CMesh* mesh )
 	{
 		CTriangle* face = mesh->m_faceVects.at(i);
 		vect3f norm = mesh->m_faceNorms.at(i);
-		glBegin(GL_TRIANGLES);
-			glNormal3f(norm[0], norm[1], norm[2]);
+		glBegin(GL_POLYGON);
+		float t = float(i%10)/5.0f;
+			glNormal3f(norm[0], norm[1]+t, norm[2]+t);
 			glVertex3fv(ps[face->getA()]);
 			glVertex3fv(ps[face->getB()]);
 			glVertex3fv(ps[face->getC()]);

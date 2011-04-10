@@ -147,8 +147,8 @@ void CPointCloudDoc::OnMesh()
 		mesh = new CIPDMesh(ps);
 		mesh->start();
 		mesh->faceNormal();
-		int hole = mesh->checkHoles();
-		TRACE("There are %d holes!",hole);
+		//int hole = mesh->checkHoles();
+		//TRACE("There are %d holes!",hole);
 		mode = MESHMODE;
 		drawData();
 	}
