@@ -6,6 +6,7 @@
 
 #include "PointCloudDoc.h"
 #include "PointCloudView.h"
+#include "Mesh.h"
 #include <math.h>
 
 #ifdef _DEBUG
@@ -433,16 +434,19 @@ void CPointCloudView::drawAxis(void)
 void CPointCloudView::drawMesh( CMesh* mesh )
 {
 	glShadeModel(GL_SMOOTH);
+	glEnable(GL_LIGHTING);
 	int nFace = mesh->m_faceVects.size();
 	float** ps = mesh->m_ps->m_point;
 
 	for (int i = 0; i < nFace ; i++)
 	{
 		CTriangle* face = mesh->m_faceVects.at(i);
-		vect3f norm = mesh->m_faceNorms.at(i);
+// 		vect3f norm = mesh->m_faceNorms.at(i);
+		vect3f& norm = face->getNorm();
+		glColor3i(i%255,(i+40)%255, (i+80)%255);
 		glBegin(GL_POLYGON);
-		float t = float(i%10)/5.0f;
-			glNormal3f(norm[0], norm[1]+t, norm[2]+t);
+// 		float t = float(i%10)/5.0f;
+			glNormal3f(norm[0], norm[1], norm[2]);
 			glVertex3fv(ps[face->getA()]);
 			glVertex3fv(ps[face->getB()]);
 			glVertex3fv(ps[face->getC()]);

@@ -3,7 +3,7 @@
 
 #ifndef CPointCloudDoc_H_
 #define CPointCloudDoc_H_
-#include "Mesh.h"
+
 #pragma once
 
 enum MODE{
@@ -11,7 +11,8 @@ enum MODE{
 	POINTMODE,
 	MESHMODE
 };
-
+class PointSet;
+class CIPDMesh;
 class CPointCloudDoc : public CDocument
 {
 protected: // 仅从序列化创建
