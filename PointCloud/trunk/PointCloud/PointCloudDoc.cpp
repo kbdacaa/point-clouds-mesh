@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "PointCloud.h"
-
+#include "Mesh.h"
 #include "PointCloudDoc.h"
 #include "PointCloudView.h"
 #include "SimplyParamDlg.h"
@@ -142,14 +142,17 @@ void CPointCloudDoc::OnEditSimply()
 
 void CPointCloudDoc::OnMesh()
 {
+	POSITION pos = GetFirstViewPosition();
+	if (!pos) return ;
+	CPointCloudView* pView = (CPointCloudView*)GetNextView(pos);
 	// TODO: 在此添加命令处理程序代码
 	if (ps != NULL){
-		mesh = new CIPDMesh(ps);
+		mesh = new CIPDMesh(ps, pView);
+		mode = MESHMODE;
 		mesh->start();
-		mesh->faceNormal();
+// 		mesh->faceNormal();
 		//int hole = mesh->checkHoles();
 		//TRACE("There are %d holes!",hole);
-		mode = MESHMODE;
 		drawData();
 	}
 }
@@ -157,7 +160,7 @@ void CPointCloudDoc::OnMesh()
 void CPointCloudDoc::OnEditFlip()
 {
 	if (mesh != NULL){
-		mesh->filpFaceNorm();
+// 		mesh->filpFaceNorm();
 		drawData();
 	}
 }

@@ -5,6 +5,7 @@
 #include "PointSet.h"
 #include "common/vect.h"
 
+#define FrontEdgeIterator std::list<CFrontEdge>::iterator
 /*
 	边类：两个顶点
 */
@@ -61,11 +62,11 @@ const short int FRONTPOINT = 2;
 class AdvancingFront{
 public:
 	bool join(CFrontEdge& edge, int vertIdx, PointSet* ps, float ballCnt[3], CTriangle* newTriangle);
-	void addEdge(const CFrontEdge& edge) { m_edgeList.push_back(edge); }
+	void addEdge(const CFrontEdge& edge) { m_frontEdgeList.push_back(edge); }
 	void addVertex(const int vertIdx) { m_vertexList.push_back(vertIdx); }
 	bool getActiveEdge(std::list<CFrontEdge>::iterator& itret){
-		for (std::list<CFrontEdge>::iterator it = m_edgeList.begin();
-			it != m_edgeList.end(); ++it){
+		for (std::list<CFrontEdge>::iterator it = m_frontEdgeList.begin();
+			it != m_frontEdgeList.end(); ++it){
 				if (it->getStatus() == ACTIVE){
 					itret = it;
 					return true;
@@ -86,9 +87,16 @@ public:
 	}
 	//@ IPD算法中使用
 	bool join(CFrontEdge& edge, int vertIdx, std::vector<short>& m_bPointUsed, CTriangle* newTriangle);
+	void setBoundary(CFrontEdge& edge){
+		edge.setBoundary();
+		//m_boundaryEdgeList.push_back(edge);
+		//m_frontEdgeList.remove(edge);
+	}
+	std::list<CFrontEdge>& frontEdgeList() { return m_frontEdgeList; }
+	int frontEdgeSize() const { return m_frontEdgeList.size(); }
 private:
-	std::list<CFrontEdge> m_edgeList;	//+波前边链表+
-	std::list<CFrontEdge> m_boundaryEdge;	//+边界边链表+
+	std::list<CFrontEdge> m_frontEdgeList;	//+波前边链表+
+	std::list<CFrontEdge> m_boundaryEdgeList;	//+边界边链表+
 	std::list<int> m_vertexList;	//+波前边上顶点链表+
 };
 // TODO:: 需要相邻三角面的指针
@@ -148,10 +156,91 @@ public:
 	 CTriangle* iNeighbor(int index) const{
 		 return m_pNeighbor[index];
 	 }
+	 //@ 计算三角形面的法矢
+	 void calcNorm(PointSet* ps){
+		 float** points = ps->m_point;
+		 float* ptA = points[getA()],
+				 * ptB = points[getB()],
+				 * ptC = points[getC()];
+		 vect3f vAB( ptB[0] - ptA[0], ptB[1] - ptA[1], ptB[2] - ptA[2]),
+			 vAC( ptC[0] - ptA[0], ptC[1] - ptA[1], ptC[2] - ptA[2]);
+		 vAB.cross(vAC);	// 与ABC面相垂直
+		 m_norm = vAB;
+	 }
+	 void filpNorm(){
+		 m_norm.negative();
+	 }
+	 vect3f& getNorm(){ return m_norm; }
 
 private:
 	int m_a, m_b, m_c;	// 三角形的三个顶点
+	vect3f m_norm;	// 三角形的法矢
 	CTriangle* m_pNeighbor[3];	// 三角形三个顶点对应的相邻三角形
+};
+
+class CPlane{
+public:
+	vect3f m_norm;	// 平面的单位法矢
+	float  m_d;				// 距离d
+public:
+	CPlane():m_norm(0, 0,1), m_d(0){}
+	CPlane(const vect3f& norm, const float& d):m_norm(norm), m_d(d){ m_norm.unit(); }
+	CPlane(const vect3f& norm, const float pt[3]):m_norm(norm){
+		m_norm.unit();
+		m_d = -pt[0]*m_norm[0] - pt[1]*m_norm[1] - pt[2]*m_norm[2];
+	}
+	CPlane(const PointSet* ps, int idxA, int idxB, int idxC){
+		float** pts = ps->m_point;
+		float* ptA = pts[idxA],
+			* ptB = pts[idxB],
+			* ptC = pts[idxC];
+		vect3f vAB( ptB[0] - ptA[0], ptB[1] - ptA[1], ptB[2] - ptA[2]),
+			vAC(ptC[0] - ptA[0], ptC[1] - ptA[1], ptC[2] - ptA[2]);
+		vAB.cross(vAC);
+		vAB.unit();
+		m_norm = vAB;
+		m_d = -vAB[0]*ptA[0] - -vAB[1]*ptA[1] - vAB[2]*ptA[2];
+	}
+	CPlane& operator=(const CPlane& p){
+		if (this != &p){
+			this->m_norm = p.m_norm;
+			setD(p.d());
+		}
+		return *this;
+	}
+	float a() const { return m_norm.at(0); }
+	float b() const { return m_norm.at(1); }
+	float c() const { return m_norm.at(2); }
+	float d() const {return m_d; }
+	void setNorm(const vect3f& norm) { m_norm = norm; m_norm.unit(); }
+	void setNorm(const float norm[3]) { m_norm[0] = norm[0]; m_norm[1] = norm[1]; m_norm[2] = norm[2];m_norm.unit(); }
+	void setD(float d) { m_d = d; }
+	void setPlane(const vect3f& norm, const float pt[3])	{
+		m_norm = norm; m_norm.unit();
+		m_d = -pt[0]*m_norm[0] - pt[1]*m_norm[1] - pt[2]*m_norm[2];
+	}
+	//@ 计算点point在面上的投影retPt
+	void projectPoint(float retPt[3], const float point[3]) const {
+		float len = ptDistToPlane(point);
+		retPt[0] = point[0] - len*a();
+		retPt[1] = point[1] - len*b();
+		retPt[2] = point[2] - len*c();
+	}
+	//@ 计算点到平面的有向距离
+	float ptDistToPlane(const float pt[3]) const {
+		return (pt[0]*a() + pt[1]*b() + pt[2]*c() + d());
+	}
+	//@ 判断两点A、B是否在平面的同一侧
+	int iSameSide(const float ptA[3], const float ptB[3]) const{
+#define ZERO  1.0e-6
+		float lenA = ptDistToPlane(ptA),
+				 lenB = ptDistToPlane(ptB);
+		if ( (lenA > ZERO && lenB > ZERO) || (lenA < -ZERO && lenB < -ZERO)) return 1;
+		else if (abs(lenA) < ZERO || abs(lenB) < ZERO) return 0;
+		return -1;
+		//return (/*(lenA == 0) || (lenB == 0) ||*/ (lenA > 0 && lenB > 0) || (lenA < 0 && lenB < 0));
+		// return lenA*lenB >= 0;
+	}
 };
 
 class CMesh
@@ -159,11 +248,11 @@ class CMesh
 public:
 	PointSet* m_ps;
 	std::vector<CTriangle*> m_faceVects;
-	std::vector<vect3f> m_faceNorms;
+	//std::vector<vect3f> m_faceNorms;
 // 	std::list<CTriangle> m_triList;
 	AdvancingFront m_front;
 	//std::vector<bool> m_bPointUsed;	// 点是否被使用的标志
-	std::vector<short int> m_bPointUsed;
+	std::vector<short int> m_bPointUsed;	// 代表当前点状态(>2时代表连接的边数)
 public:
 	CMesh(PointSet* ps);
 	~CMesh(void);
@@ -171,8 +260,8 @@ public:
 public:
 	virtual void start() = 0;
 	virtual void writeToFile(char* pFileName);
-	void faceNormal();
-	void filpFaceNorm();
+// 	void faceNormal();
+// 	void filpFaceNorm();
 	int checkHoles();
 
 	/* 返回从起始点开始的第一个未被使用的点序号，如果未找到返回-1
@@ -251,14 +340,17 @@ public:
 */
 };
 
+class CPointCloudView;
+
 class CIPDMesh : public CMesh
 {
+	CPointCloudView* pView;
 public:
-	CIPDMesh(PointSet* ps):CMesh(ps){}
+	CIPDMesh(PointSet* ps, CPointCloudView* pview = NULL):CMesh(ps){pView = pview; }
 	void start();
 	bool findSeedTriangle(CTriangle& face, int K = 15);
 	bool findSeedTriangle2(CTriangle*& pFace, int K = 15);
-	bool getBestPt(CFrontEdge& frontEdge, int& bestIdx, const int& K = 15);
+	bool getBestPt(FrontEdgeIterator& itEdge, int& bestIdx, const int& K = 15);
 protected:
 	float getDists(const int& idxC, const int& idxA, const int& idxB){
 		float** pts = m_ps->m_point;
@@ -352,5 +444,50 @@ protected:
 		float eWeight = getEWeightTri(edge, idxNext);
 		float HRGWeight = getHRGDihedralWeight(lamd, dihedralAngel);
 		return eWeight + HRGWeight;
+	}
+	//@ 判断点idx是否在三角形ABC的影响域内？
+	bool isInPlay(int idx, int edgeA, int edgeB, int edgeC, int edgePre, int edgeNext);
+	//@ 获得影响域的两个面
+	int getPlanes(CPlane& pre, CPlane& next, int eA, int eB, int tC, int ePre, int eNext);
+	//@ 获得边edge的前后点
+	void getPreNextIdx(int& idxPre, int& idxNext, const FrontEdgeIterator& edgeIt){
+		std::list<CFrontEdge>& frontEdgeList = m_front.frontEdgeList();
+		int idxA = edgeIt->getA(), idxB = edgeIt->getB();
+		FrontEdgeIterator itPre = edgeIt, itNext = edgeIt, it = edgeIt;
+		int size = m_front.frontEdgeSize();
+		idxPre = idxNext = -1;
+		if (size < 2)	return;
+
+		if (edgeIt == frontEdgeList.begin()){
+			itPre = frontEdgeList.end();
+			itPre --;
+			itNext ++;
+		}else if (edgeIt == --frontEdgeList.end() ){
+			itPre --;
+			itNext = frontEdgeList.begin();
+		}else{
+			itPre --;
+			itNext ++;
+		}
+		if (itPre->getB() == idxA && itNext->getA() == idxB){
+			idxPre = itPre->getA();
+			idxNext = itNext->getB();
+			return ;
+		}
+		for (it = frontEdgeList.begin(); it != frontEdgeList.end(); ++it){
+			if (it->getB() == idxA)
+				idxPre = it->getA();
+			else if (it->getA() == idxB)
+				idxNext = it->getB();
+		}
+	}
+	//@ 判断点idx在两个面之间?
+	bool isBtwPlanes(const CPlane& prePlane, const CPlane& nextPlane, const CFrontEdge& edge, int idx){
+		float* pt = m_ps->m_point[idx],
+				* ptA = m_ps->m_point[edge.getA()],
+				* ptB = m_ps->m_point[edge.getB()];
+		int iSame = prePlane.iSameSide(ptB, pt);
+		if (iSame < 0) return false;
+		return nextPlane.iSameSide(ptA, pt) >= 0;
 	}
 };

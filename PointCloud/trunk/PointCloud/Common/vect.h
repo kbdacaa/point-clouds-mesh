@@ -100,7 +100,7 @@ public:
 	vect3<T>(const vect3<T>& obj);
 	vect3<T>(const T x, const T y, const T z) {v[0] = x; v[1] = y; v[2] = z;}
 	~vect3<T>() {}
-
+	inline T at(const int idx) const { return v[idx]; }
 	// functions
 	inline void add(const vect3<T>);
 	inline void subtract(const vect3<T>);

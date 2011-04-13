@@ -8,10 +8,13 @@
 #include <gl/GL.h>
 #include <gl/glu.h>
 #include <gl/glaux.h>
-#include "Mesh.h"
+
 #pragma comment(lib, "glu32.lib")
 #pragma comment(lib, "glaux.lib")
 
+class CPointCloudDoc;
+class PointSet;
+class CMesh;
 class CPointCloudView : public CView
 {
 protected: // 仅从序列化创建
