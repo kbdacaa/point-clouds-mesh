@@ -135,6 +135,7 @@
     <ClCompile Include="ANN\kd_split.cpp" />
     <ClCompile Include="ANN\kd_tree.cpp" />
     <ClCompile Include="ANN\kd_util.cpp" />
+    <ClCompile Include="FtpMesh.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="ANN\perf.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="Common\array3d.h" />
     <ClInclude Include="ANN\bd_tree.h" />
     <ClInclude Include="CellData.h" />
+    <ClInclude Include="FtpMesh.h" />
     <ClInclude Include="NumericalC\jacobi.h" />
     <ClInclude Include="ANN\kd_fix_rad_search.h" />
     <ClInclude Include="ANN\kd_pr_search.h" />
