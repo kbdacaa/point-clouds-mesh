@@ -90,6 +90,9 @@
     <ClCompile Include="NumericalC\SVD.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="FtpMesh.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h">
@@ -174,6 +177,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Common\vect.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FtpMesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

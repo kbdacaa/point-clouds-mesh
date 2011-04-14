@@ -40,6 +40,7 @@ public:
 		: CEdge(a, b), m_status(ACTIVE){ m_pPreTri = NULL; }
 
 	void setBoundary() { m_status = BOUNDARY; }
+	bool bBoundary() const { return m_status == BOUNDARY; }
 	int getStatus() const { return m_status; }
 	void setCenter(const float ballCenter[3]){
 		m_ballCenter[0] = ballCenter[0];
@@ -55,9 +56,10 @@ public:
 	CTriangle* m_pPreTri;
 };
 // TODO 最好将点的状态信息放到AF中
-const short int UNUSEDPOINT = 0;
-const short int INPOINT = 1;
-const short int FRONTPOINT = 2;
+const short  UNUSEDPOINT = 0;
+const short  INPOINT = 1;
+const short  FRONTPOINT = 2;
+const short  BOUNDARYPOINT = -1;
 
 class AdvancingFront{
 public:
@@ -134,18 +136,24 @@ public:
 	bool isTriVertex(const int idx){
 		return (m_a == idx || m_b == idx || m_c == idx);
 	}
-	// 此处假设idx是三角形的一个顶点
+	//! 此处假设idx是三角形的一个顶点
 	void setNeighbor(const int idx, CTriangle* pface){
 		if (idx == m_a) m_pNeighbor[0] = pface;
 		else if (idx == m_b) m_pNeighbor[1] = pface;
 		else m_pNeighbor[2] = pface;
 	}
-	// 此处假设edge必须是三角形的一条边
+	//! 此处假设edge必须是三角形的一条边
 	void setNeighbor(const CFrontEdge& edge, CTriangle* pface){
 		if (m_a != edge.getA() && m_a!=edge.getB()) setNeighbor(m_a, pface);
 		else if (m_b!=edge.getA() && m_b != edge.getB()) setNeighbor(m_b, pface);
 		else setNeighbor(m_c, pface);
 	}
+	void setNeighbor(const FrontEdgeIterator& itEdge, CTriangle* pface){
+		if (m_a != itEdge->getA() && m_a!=itEdge->getB()) setNeighbor(m_a, pface);
+		else if (m_b!=itEdge->getA() && m_b != itEdge->getB()) setNeighbor(m_b, pface);
+		else setNeighbor(m_c, pface);
+	}
+
 	// 返回对应顶点对应的邻居,如果不是三角形顶点返回NULL
 	 CTriangle* getNeighbor(int idx)const{
 		if (idx == m_a) return m_pNeighbor[0];
@@ -248,11 +256,10 @@ class CMesh
 public:
 	PointSet* m_ps;
 	std::vector<CTriangle*> m_faceVects;
-	//std::vector<vect3f> m_faceNorms;
-// 	std::list<CTriangle> m_triList;
-	AdvancingFront m_front;
-	//std::vector<bool> m_bPointUsed;	// 点是否被使用的标志
-	std::vector<short int> m_bPointUsed;	// 代表当前点状态(>2时代表连接的边数)
+	std::vector<short> m_bPointUsed;	// 代表当前点状态(>2时代表连接的边数)
+// std::vector<vect3f> m_faceNorms;
+// std::list<CTriangle> m_triList;
+// std::vector<bool> m_bPointUsed;	// 点是否被使用的标志
 public:
 	CMesh(PointSet* ps);
 	~CMesh(void);
@@ -318,6 +325,7 @@ class CBpaMesh : public CMesh
 public:
 	int m_K;		// K邻域的大小K
 	float m_ballR;
+	AdvancingFront m_front;
 public:
 	CBpaMesh(PointSet* ps, int k = 15);
 	void start();
@@ -344,7 +352,9 @@ class CPointCloudView;
 
 class CIPDMesh : public CMesh
 {
+public:
 	CPointCloudView* pView;
+	AdvancingFront m_front;
 public:
 	CIPDMesh(PointSet* ps, CPointCloudView* pview = NULL):CMesh(ps){pView = pview; }
 	void start();
