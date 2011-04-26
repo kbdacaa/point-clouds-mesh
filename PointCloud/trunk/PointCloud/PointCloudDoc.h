@@ -12,7 +12,7 @@ enum MODE{
 	MESHMODE
 };
 class PointSet;
-class CIPDMesh;
+class CMesh;
 class CPointCloudDoc : public CDocument
 {
 protected: // 仅从序列化创建
@@ -22,7 +22,7 @@ protected: // 仅从序列化创建
 // 属性
 public:
 	PointSet* ps;
-		CIPDMesh* mesh;
+	CMesh* mesh;
 
 	MODE mode;
 
@@ -54,5 +54,6 @@ public:
 	afx_msg void OnEditSimply();
 	afx_msg void OnMesh();
 	afx_msg void OnEditFlip();
+	afx_msg void OnFtpMesh();
 };
 #endif

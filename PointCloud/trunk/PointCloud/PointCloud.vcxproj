@@ -58,10 +58,11 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" />
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">D:\Program Files\GnuWin32\include;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">D:\boost;D:\Program Files\GnuWin32\include;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">D:\Program Files\GnuWin32\lib;$(LibraryPath)</LibraryPath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">D:\Program Files\GnuWin32\include;$(IncludePath)</IncludePath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">D:\Program Files\GnuWin32\lib;$(LibraryPath)</LibraryPath>
+    <ReferencePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">D:\boost\lib;$(ReferencePath)</ReferencePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -135,6 +136,7 @@
     <ClCompile Include="ANN\kd_split.cpp" />
     <ClCompile Include="ANN\kd_tree.cpp" />
     <ClCompile Include="ANN\kd_util.cpp" />
+    <ClCompile Include="Common\tracealloc.cpp" />
     <ClCompile Include="FtpMesh.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -142,6 +144,7 @@
     <ClCompile Include="PointCloud.cpp" />
     <ClCompile Include="PointCloudDoc.cpp" />
     <ClCompile Include="PointCloudView.cpp" />
+    <ClCompile Include="PointMesh.cpp" />
     <ClCompile Include="PointSet.cpp" />
     <ClCompile Include="SimplyParamDlg.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -158,6 +161,8 @@
     <ClInclude Include="Common\array3d.h" />
     <ClInclude Include="ANN\bd_tree.h" />
     <ClInclude Include="CellData.h" />
+    <ClInclude Include="Common\FileReadPlug.h" />
+    <ClInclude Include="Common\KdTree.h" />
     <ClInclude Include="FtpMesh.h" />
     <ClInclude Include="NumericalC\jacobi.h" />
     <ClInclude Include="ANN\kd_fix_rad_search.h" />
@@ -172,6 +177,7 @@
     <ClInclude Include="PointCloud.h" />
     <ClInclude Include="PointCloudDoc.h" />
     <ClInclude Include="PointCloudView.h" />
+    <ClInclude Include="PointMesh.h" />
     <ClInclude Include="PointSet.h" />
     <ClInclude Include="ANN\pr_queue.h" />
     <ClInclude Include="ANN\pr_queue_k.h" />
@@ -186,7 +192,6 @@
     <None Include="res\PointCloud.rc2" />
     <None Include="res\PointCloudDoc.ico" />
     <None Include="res\Toolbar.bmp" />
-    <None Include="PointCloud.reg" />
     <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>

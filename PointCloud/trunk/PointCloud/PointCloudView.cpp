@@ -9,9 +9,11 @@
 #include "Mesh.h"
 #include <math.h>
 
+/*
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+*/
 
 // CPointCloudView
 
@@ -26,9 +28,8 @@ BEGIN_MESSAGE_MAP(CPointCloudView, CView)
 	ON_WM_MOUSEMOVE()
 	ON_WM_RBUTTONUP()
 	ON_WM_RBUTTONDOWN()
+	ON_WM_KEYDOWN()
 END_MESSAGE_MAP()
-
-// CPointCloudView 构造/析构
 
 CPointCloudView::CPointCloudView()
 {
@@ -64,6 +65,9 @@ CPointCloudView::CPointCloudView()
 	shift_x = 0;
 	shift_y = 0;
 	shift_z = 0;
+
+	bCtrlDown = false;
+	bLeftDown = false;
 }
 
 CPointCloudView::~CPointCloudView()
@@ -72,13 +76,8 @@ CPointCloudView::~CPointCloudView()
 
 BOOL CPointCloudView::PreCreateWindow(CREATESTRUCT& cs)
 {
-	// TODO: 在此处通过修改
-	//  CREATESTRUCT cs 来修改窗口类或样式
-
 	return CView::PreCreateWindow(cs);
 }
-
-// CPointCloudView 绘制
 
 void CPointCloudView::OnDraw(CDC* pDC)
 {
@@ -89,7 +88,8 @@ void CPointCloudView::OnDraw(CDC* pDC)
 
 	wglMakeCurrent(pDC->m_hDC, m_hRC);
 
-	glClearColor(0.644, 0.828, 0.1875, 0.9);
+	//glClearColor(0.644, 0.828, 0.1875, 0.9);
+	glClearColor(0.4, 0.48, 0.175, 0.9);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 // 	TRACE("%f, %f\n", Ry, Rz);
@@ -101,7 +101,6 @@ void CPointCloudView::OnDraw(CDC* pDC)
 	glRotatef(Ry,vy[0],vy[1],vy[2]);
 	glRotatef(Rz,vx[0],vx[1],vx[2]);
 
-// 	drawData();
 	drawAxis();
  	pDoc->drawData();
 
@@ -131,8 +130,6 @@ CPointCloudDoc* CPointCloudView::GetDocument() const // 非调试版本是内联的
 	return (CPointCloudDoc*)m_pDocument;
 }
 #endif //_DEBUG
-
-// CPointCloudView 消息处理程序
 
 void CPointCloudView::initGL(void)
 {
@@ -207,9 +204,13 @@ void CPointCloudView::initGL(void)
 
 	glEnable(GL_LIGHTING);
 
-	glEnable(GL_LIGHT3);
-	glEnable(GL_LIGHT4);
-	glEnable(GL_LIGHT5);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT2);
+
+// 	glEnable(GL_LIGHT3);
+// 	glEnable(GL_LIGHT4);
+// 	glEnable(GL_LIGHT5);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -223,13 +224,7 @@ void CPointCloudView::initGL(void)
 	glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
 
 	glLineWidth(1.0);
-	glPointSize(3.0);
-}
-
-void CPointCloudView::draw(){
-	CClientDC* pDC = new CClientDC(this);
-	OnDraw(pDC);
-	delete pDC;
+	glPointSize(1.0);
 }
 
 int CPointCloudView::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -325,10 +320,7 @@ void CPointCloudView::OnLButtonDown(UINT nFlags, CPoint point)
 void CPointCloudView::OnLButtonUp(UINT nFlags, CPoint point)
 {
 	isLPressed = FALSE;
-	CClientDC* dc = new CClientDC(this);
-	OnDraw(dc);
-	delete dc;
-
+	draw();
 	CView::OnLButtonUp(nFlags, point);
 }
 
@@ -342,9 +334,7 @@ void CPointCloudView::OnMouseMove(UINT nFlags, CPoint point)
 		Ry += (ny - py)/3;
 		px = nx;
 		py = ny;
-		CClientDC* dc = new CClientDC(this);
-		OnDraw(dc);
-		delete dc;
+		draw();
 	}
 	else if(isRPressed){
 		int nx = point.x;
@@ -353,14 +343,11 @@ void CPointCloudView::OnMouseMove(UINT nFlags, CPoint point)
 		view_angle += (ny - py)/20.0f;
 		px = nx;
 		py = ny;
-		CClientDC* dc = new CClientDC(this);
 
-		RECT* rect = new RECT;
-		GetClientRect(rect);
-		OnSize(SIZE_RESTORED, rect->right, rect->bottom);
-		delete rect;
-		OnDraw(dc);
-		delete dc;
+		RECT rect;
+		GetClientRect(&rect);
+		OnSize(SIZE_RESTORED, rect.right, rect.bottom);
+		draw();
 	}
 
 	CView::OnMouseMove(nFlags, point);
@@ -378,18 +365,25 @@ void CPointCloudView::OnRButtonDown(UINT nFlags, CPoint point)
 void CPointCloudView::OnRButtonUp(UINT nFlags, CPoint point)
 {
 	isRPressed = FALSE;
-	CClientDC* dc = new CClientDC(this);
-	OnDraw(dc);
-	delete dc;
+	draw();
 
 	CView::OnRButtonUp(nFlags, point);
 }
 
-void CPointCloudView::drawData(void)
+void CPointCloudView::drawAxis(void)
 {
-	glColor3f(0.f, 0.f, 0.f);
-	glBegin(GL_POINTS);
-	glVertex3f(2.0f, 3.0f, 4.0f);
+	glColor3f(1.f, 0.4f, 0.1f);
+	glBegin(GL_LINES);
+	{
+		glVertex3f(0.f, 0.f, 0.f);
+		glVertex3f(15.f, 0.f, 0.f);
+
+		glVertex3f(0.f, 0.f, 0.f);
+		glVertex3f(0.f, 15.f, 0.f);
+
+		glVertex3f(0.f, 0.f, 0.f);
+		glVertex3f(0.f, 0.f, 15.f);
+	}
 	glEnd();
 }
 
@@ -401,9 +395,11 @@ void CPointCloudView::drawPoint(PointSet* ps){
 // 	if(normal == NULL){
 		glDisable(GL_LIGHTING);
 		glBegin(GL_POINTS);
-		glColor3f(0,0,1);
-		for(int i=0; i<pointN; i++)
-			glVertex3f(point[i][0], point[i][1], point[i][2]);
+		{
+			glColor3f(0,0,0.7);
+			for(int i=0; i<pointN; i++)
+				glVertex3f(point[i][0], point[i][1], point[i][2]);
+		}
 		glEnd();
 		glEnable(GL_LIGHTING);
 // 	}
@@ -416,40 +412,68 @@ void CPointCloudView::drawPoint(PointSet* ps){
 // 		glEnd();
 // 	}
 }
-void CPointCloudView::drawAxis(void)
-{
-	glColor3f(1.f, 0.f, 0.f);
-	glBegin(GL_LINES);
-		glVertex3f(0.f, 0.f, 0.f);
-		glVertex3f(10.f, 0.f, 0.f);
-
-		glVertex3f(0.f, 0.f, 0.f);
-		glVertex3f(0.f, 10.f, 0.f);
-
-		glVertex3f(0.f, 0.f, 0.f);
-		glVertex3f(0.f, 0.f, 10.f);
-	glEnd();
-}
 
 void CPointCloudView::drawMesh( CMesh* mesh )
 {
 	glShadeModel(GL_SMOOTH);
-	glEnable(GL_LIGHTING);
+	//glEnable(GL_LIGHTING);
+	glDisable(GL_LIGHTING);
 	int nFace = mesh->m_faceVects.size();
 	float** ps = mesh->m_ps->m_point;
+	int pointN = mesh->m_ps->m_pointN;
 
-	for (int i = 0; i < nFace ; i++)
+	glBegin(GL_POINTS);
+	{
+		glColor3f(0,0,0.7);
+		for(int i=0; i<pointN; i++)
+			glVertex3f(ps[i][0], ps[i][1], ps[i][2]);
+	}
+	glEnd();
+	glEnable(GL_LIGHTING);
+
+// 	for (int i = 0; i < nFace-1 ; i++)
+	for (int i = 0 ; i < nFace-1 ; i++)
 	{
 		CTriangle* face = mesh->m_faceVects.at(i);
-// 		vect3f norm = mesh->m_faceNorms.at(i);
+
 		vect3f& norm = face->getNorm();
-		glColor3i(i%255,(i+40)%255, (i+80)%255);
 		glBegin(GL_POLYGON);
-// 		float t = float(i%10)/5.0f;
+		{
 			glNormal3f(norm[0], norm[1], norm[2]);
 			glVertex3fv(ps[face->getA()]);
 			glVertex3fv(ps[face->getB()]);
 			glVertex3fv(ps[face->getC()]);
-		glEnd();
+			glEnd();
+		}
 	}
+	CTriangle* face = mesh->m_faceVects.at(nFace-1);
+	glDisable(GL_LIGHTING);
+	glBegin(GL_TRIANGLES);
+	{
+		//	glNormal3f(norm[0], norm[1], norm[2]);
+		glColor3f(1.0, 0.0, 0.0);	glVertex3fv(ps[face->getA()]);
+		glColor3f(0.0, 1.0, 0.0);	glVertex3fv(ps[face->getB()]);
+		glColor3f(0.0, 0.0, 1.0);	glVertex3fv(ps[face->getC()]);
+	}
+	glEnd();
+}
+
+void CPointCloudView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	if (nChar == VK_LEFT){
+		shift_x -= 2;
+	}else if (nChar == VK_RIGHT){
+		shift_x += 2;
+	}else if (VK_UP == nChar){
+		shift_y += 2;
+	}else if (VK_DOWN == nChar){
+		shift_y -= 2;
+	}else if (VK_ADD == nChar){
+		shift_z += 2;
+	}else if (VK_SUBTRACT == nChar){
+		shift_z -= 2;
+	}
+	draw();
+
+	CView::OnKeyDown(nChar, nRepCnt, nFlags);
 }

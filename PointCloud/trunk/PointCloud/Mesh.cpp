@@ -4,6 +4,12 @@
 #include <iostream>
 #include "PointCloudView.h"
 using namespace std;
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#define _CRTDBG_MAP_ALLOC
+#endif
+//=====================AdvancingFront=========================//
 // TODO 此处需要生成一个新的三角面，这样才能设置当前新加入的边设置的指针
 bool AdvancingFront::join(CFrontEdge& edge, int vertIdx, PointSet* ps, float ballCnt[3], CTriangle* newTriangle){
 	bool used = IsVertexUsed(vertIdx);
@@ -84,15 +90,14 @@ bool AdvancingFront::join(CFrontEdge& edge, int vertIdx, PointSet* ps, float bal
 
 bool AdvancingFront::join( CFrontEdge& edge, int vertIdx, vector<short>& m_bPointUsed, CTriangle* newTriangle )
 {
-	assert(edge.getA() != vertIdx);
-	assert(edge.getB() != vertIdx);
+// 	assert(edge.getA() != vertIdx);
+// 	assert(edge.getB() != vertIdx);
 
 	typedef list<CFrontEdge>::iterator IT;
 	IT itA = m_frontEdgeList.end(), itB = itA;
-	IT it = m_frontEdgeList.begin();
 	int iVertIdxOnFront = 0;	// 最优点连接的波前边数
-
-	for (; it != m_frontEdgeList.end(); ++it)
+	//! 查找
+	for (IT it = m_frontEdgeList.begin(); it != m_frontEdgeList.end(); ++it)
 	{
 		if (it->getA() == vertIdx || it->getB()==vertIdx){
 			iVertIdxOnFront++;	// 最优点在波前边上
@@ -104,59 +109,57 @@ bool AdvancingFront::join( CFrontEdge& edge, int vertIdx, vector<short>& m_bPoin
 	}
 	// 设置两个三角形的相邻关系
 	newTriangle->setTriVertexs(edge.getA(), vertIdx, edge.getB());
-	edge.getPreTriangle()->setNeighbor(edge, newTriangle);
+	edge.getPreTriangle()->setNeighbor(edge.getOppPoint(), newTriangle);
 	newTriangle->setNeighbor(vertIdx, edge.getPreTriangle());
 
 	if (itA == itB) {	// vertIdx不在波前边上|vertIdx在波前边上但没有要合并的边
 		if (iVertIdxOnFront == 0){	// 不在波前边上才需要添加
-			m_vertexList.push_back(vertIdx);
+//			m_vertexList.push_back(vertIdx);
 			m_bPointUsed[vertIdx] = FRONTPOINT;
-		} else {
-			m_bPointUsed[vertIdx] += 2;
-		}
-		CFrontEdge a(edge.getA(), vertIdx), b(vertIdx, edge.getB());
-		a.setPreTriangle(newTriangle);
-		b.setPreTriangle(newTriangle);
+		} /*
+		else {
+					m_bPointUsed[vertIdx] += 2;
+				}*/
+
+		CFrontEdge a(edge.getA(), vertIdx, edge.getB(), newTriangle),
+			b(vertIdx, edge.getB(), edge.getA(), newTriangle);
 		m_frontEdgeList.push_back(a);
 		m_frontEdgeList.push_back(b);
 		m_frontEdgeList.remove(edge);
-	} else {	// vertIdx在波前边上且存在需要合并的边
-		if (itA != m_frontEdgeList.end()){
+	} else {	// vertIdx在波前边上
+		if (itA != m_frontEdgeList.end()){	// 边VA需要合并
 			newTriangle->setNeighbor(vertIdx, itA->getPreTriangle());
-			itA->getPreTriangle()->setNeighbor(*itA, newTriangle);
+			itA->getPreTriangle()->setNeighbor(itA->getOppPoint(), newTriangle);
 
 			m_frontEdgeList.remove(*itA);
-			m_vertexList.remove(edge.getA());
+//			m_vertexList.remove(edge.getA());
 			m_bPointUsed[edge.getA()] = INPOINT;	// A 为内点
 		} else {
-			CFrontEdge a(edge.getA(), vertIdx);
-			a.setPreTriangle(newTriangle);
+			CFrontEdge a(edge.getA(), vertIdx, edge.getB(), newTriangle);
 			m_frontEdgeList.push_back(a);
-			m_bPointUsed[vertIdx] ++;
 		}
-		if (itB != m_frontEdgeList.end()){
+
+		if (itB != m_frontEdgeList.end()){	// 边BV需要合并
 			newTriangle->setNeighbor(vertIdx, itB->getPreTriangle());
-			itB->getPreTriangle()->setNeighbor(*itB, newTriangle);
+			itB->getPreTriangle()->setNeighbor(itB->getOppPoint(), newTriangle);
 
 			m_frontEdgeList.remove(*itB);
-			m_vertexList.remove(edge.getB());
+//			m_vertexList.remove(edge.getB());
 			m_bPointUsed[edge.getB()] = INPOINT;		// B 为内点
 		} else {
-			CFrontEdge b(vertIdx, edge.getB());
-			b.setPreTriangle(newTriangle);
+			CFrontEdge b(vertIdx, edge.getB(), edge.getA(), newTriangle);
 			m_frontEdgeList.push_back(b);
-			m_bPointUsed[vertIdx] ++;
 		}
 		// TODO 同时合并两条并且连接此点的线段为2，这样vertIdx才是内点
 		if (iVertIdxOnFront == 2 && itA != m_frontEdgeList.end() && itB != m_frontEdgeList.end()){
-			m_vertexList.remove(vertIdx);
+//			m_vertexList.remove(vertIdx);
 			m_bPointUsed[vertIdx] = INPOINT;
 		}
 		m_frontEdgeList.remove(edge);
 	}
 	return true;
 }
-
+//=====================CMesh========================//
 CMesh::CMesh(PointSet* ps)
 	: m_ps(ps)
 {
@@ -170,10 +173,14 @@ CMesh::CMesh(PointSet* ps)
 
 CMesh::~CMesh(void)
 {
-	for (unsigned int i = 0; i < m_faceVects.size() ; i++)
+	for (size_t i = 0; i < m_faceVects.size() ; i++)
 	{
 		delete m_faceVects[i];
+		m_faceVects[i] = NULL;
 	}
+	m_faceVects.clear();
+	m_bPointUsed.clear();
+	m_ps = NULL;
 }
 
 void CMesh::writeToFile(char* pFileName)
@@ -264,10 +271,43 @@ int CMesh::checkHoles()
 	return hole;
 }
 
-//==================CBPAMESH====================
+bool CMesh::repair()
+{
+	int ptN = m_ps->m_pointN;
+	int* linkN = new int[ptN];	// 顶点相邻三角形个数
+	int** link = new int*[ptN];	// 顶点相邻三角形序号数组
+
+	for (int i = 0; i < ptN ; i++){
+		link[i] = NULL;
+		linkN = 0;
+	}
+
+	// 统计每一个顶点的相邻三角形
+	int triN = m_faceVects.size();
+	for (int i = 0; i < triN ; i++){
+		for (int j = 0; j < 3; j++) {
+			int idxPt = m_faceVects[i]->vertex(j);
+			int lN = linkN[idxPt];
+			int* l_tmp = new int[lN+1];
+			int* l_old = link[idxPt];
+			for(int k = 0; k < lN; k++)
+				l_tmp[k] = l_old[k];
+			l_tmp[lN] = i;
+			if(lN != 0) delete[] l_old;
+			link[idxPt] = l_tmp;
+			linkN[idxPt] ++;
+		}
+	}
+
+	delete[] link;
+	delete[] linkN;
+	return true;
+}
+
+//==================CBPAMESH====================//
 
 inline float veccos(float* a, float* b){
-	return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]) / (sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]) * sqrt(b[0]*b[0]+b[1]*b[1]+b[2]*b[2]));
+	return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]) / sqrt((a[0]*a[0]+a[1]*a[1]+a[2]*a[2]) * (b[0]*b[0]+b[1]*b[1]+b[2]*b[2]));
 }
 
 inline void vecCross(float* ret, float* a, float* b){
@@ -294,7 +334,9 @@ float CBpaMesh::getArc( float* center, float* Cijo, float* Cko)
 	float ct[3];	// 垂直于co(center->Cijo)的向量
 	vecCross(ct, ccot, co);
 	float cosco = veccos(co, ck);	// co 和 ck 两个向量的余弦
-	float cosct = veccos(ct, ck);// ct 和 ck 两个向量的余弦
+	//float cosct = veccos(ct, ck);// ct 和 ck 两个向量的余弦
+	float cosct = ct[0]*ck[0] + ct[1]*ck[1]+ct[2]*ck[2];
+
 //	if (cosco > 0){
 		if (cosct > 0)
 			return 1.0f - cosco;		// 0->1
@@ -639,7 +681,7 @@ float CIPDMesh::getTriArea( const int& idxA, const int& idxB, const int& idxC )
 	float ab = sqrt( (ptA[0]-ptB[0])*(ptA[0]-ptB[0]) + (ptA[1]-ptB[1])*(ptA[1]-ptB[1]) + (ptA[2]-ptB[2])*(ptA[2]-ptB[2]) ),
 			 bc = sqrt( (ptC[0]-ptB[0])*(ptC[0]-ptB[0]) + (ptC[1]-ptB[1])*(ptC[1]-ptB[1]) + (ptC[2]-ptB[2])*(ptC[2]-ptB[2]) ),
 			 ac = sqrt( (ptA[0]-ptC[0])*(ptA[0]-ptC[0]) + (ptA[1]-ptC[1])*(ptA[1]-ptC[1]) + (ptA[2]-ptC[2])*(ptA[2]-ptC[2]) );
-	float p = (ab + bc + ac) / 2.0f;
+	float p = (ab + bc + ac) * 0.5f;
 	float area = sqrt( p*(p-ab)*(p-bc)*(p-ac) );
 	return area;
 }
@@ -809,33 +851,32 @@ bool CIPDMesh::getBestPt( FrontEdgeIterator& itEdge, int& bestIdx, const int& K 
 {
 	CFrontEdge frontEdge = *itEdge;
 	int idxA = frontEdge.getA(), idxB = frontEdge.getB();
-	if (idxA == 14 && idxB == 13)
-		int t = 0;
+
 	float* ptA = m_ps->m_point[idxA],
 			* ptB = m_ps->m_point[idxB];
 	float midAB[3] = { (ptA[0]+ptB[0])/2.0f, (ptA[1]+ptB[1])/2.0f, (ptA[2]+ptB[2])/2.0f };
 
-	ANNidxArray nnIdx = new ANNidx[K+1];
-	ANNdistArray dists = new ANNdist[K+1];
+	ANNidxArray nnIdx = new ANNidx[K];
+	ANNdistArray dists = new ANNdist[K];
 
-	m_ps->m_kdTree->annkSearch(midAB, K+1, nnIdx, dists);
+	m_ps->m_kdTree->annkSearch(midAB, K, nnIdx, dists);
 	delete[] dists;
 	float minWeight = FLT_MAX;
 	int idxC = -1;
 
 //#define MINTRIANGEL  0.1339745962	// 1-cos(30') 即三角形最小内角要大于30'
 //#define MINTRIANGEL  0.0603073792	// 1-cos(20') 即三角形最小内角要大于20'
-#define MINTRIANGEL  0.09369221296335	// 1-cos(20') 即三角形最小内角要大于25'
+#define MINTRIANGEL  0.09369221296335	// 1-cos(25') 即三角形最小内角要大于25'
 #define MAXDIHEDRALANGEL 1.5 // 1-cos(150') 即二面角最大为150'
 //#define MAXDIHEDRALANGEL 1.8660254 // 1-cos(150') 即二面角最大为150'
-	int idxPre = frontEdge.getPreTriangle()->getVertex(frontEdge);
+	int idxPre = frontEdge.getOppPoint();
 
 	CPlane prePlane, nextPlane;
 	int idxApre = -1, idxBnext = -1;
 	getPreNextIdx(idxApre, idxBnext, itEdge);
 	getPlanes(prePlane, nextPlane, idxA, idxB, idxPre, idxApre, idxBnext);
 
-	for (int i=1; i < K+1 ; i++)
+	for (int i=0; i < K ; i++)
 	{
 		int idxCur = nnIdx[i];
 		if ( INPOINT == m_bPointUsed[idxCur] || idxCur == idxA || idxCur == idxB || idxCur == idxPre) continue;
@@ -848,8 +889,10 @@ bool CIPDMesh::getBestPt( FrontEdgeIterator& itEdge, int& bestIdx, const int& K 
 		//if (minAngel > MINTRIANGEL){
 		//	float weight = getWeightTri(frontEdge, idxCur, 4.0);
 			// 测试使用
+			//TODO: 对于波前边上的顶点 要格外注意，还要判断连接点是否在点的外测
 			float fPointUsedTimes = m_bPointUsed[idxCur];
-			float weight = getWeightTri(frontEdge, idxCur, 4.0, dihedralAngel) + (float)m_bPointUsed[idxCur];
+			float weight = getWeightTri(frontEdge, idxCur, 8.0, dihedralAngel) ;//+ (float)m_bPointUsed[idxCur];
+			if (FRONTPOINT == m_bPointUsed[idxCur])	weight -= 2;
 			if (minWeight > weight){
 				minWeight = weight;
 				idxC = idxCur;
@@ -866,21 +909,22 @@ bool CIPDMesh::getBestPt( FrontEdgeIterator& itEdge, int& bestIdx, const int& K 
 }
 
 void CIPDMesh::start(){
-#define OUTFACEFILE
+//#define OUTFACEFILE
 #ifdef OUTFACEFILE
 	const char* facePath = "face.ply";
 	ofstream faceFile(facePath);
 	if (!faceFile) return ;
 #endif
 
-	CTriangle* pFace = NULL;
 	FrontEdgeIterator itEdge;
 	int vertIdx;
 	while (true){
 		while (m_front.getActiveEdge(itEdge))
 		{
 			CEdge edge = *itEdge;
-			bool pivoted = getBestPt(itEdge, vertIdx, 10);
+			//bool pivoted = getBestPt(itEdge, vertIdx, 8);
+			bool bFrontPoint = false;
+			bool pivoted = getCandidatePoint(itEdge, vertIdx, bFrontPoint, 8);
 			if (pivoted){
 				CTriangle* newTri = new CTriangle;
 				m_front.join(*itEdge, vertIdx, m_bPointUsed, newTri);
@@ -894,18 +938,17 @@ void CIPDMesh::start(){
 				m_front.setBoundary(*itEdge);
 			}
 			pView->draw();
-	//		Sleep(1000);
+	//		Sleep(200);
 		}
 
+		CTriangle* pFace = NULL;
 		if (findSeedTriangle2(pFace)){
+			pFace->calcNorm(m_ps);
 			m_faceVects.push_back(pFace);
 
-			CFrontEdge a(pFace->getA(), pFace->getB()),
-								  b(pFace->getB(), pFace->getC()),
-								  c(pFace->getC(), pFace->getA());
-			a.setPreTriangle(pFace);
-			b.setPreTriangle(pFace);
-			c.setPreTriangle(pFace);
+			CFrontEdge a(pFace->getA(), pFace->getB(), pFace->getC(), pFace),
+								  b(pFace->getB(), pFace->getC(), pFace->getA(), pFace),
+								  c(pFace->getC(), pFace->getA(), pFace->getB(), pFace);
 			m_front.addEdge(a);
 			m_front.addEdge(b);
 			m_front.addEdge(c);
@@ -971,4 +1014,93 @@ int CIPDMesh::getPlanes( CPlane& prePlane, CPlane& nextPlane, int eA, int eB, in
 		}
 	}
 	return 2;
+}
+
+bool CIPDMesh::getCandidatePoint(FrontEdgeIterator& itEdge, int& bestIdx, bool& bFrontPoint, const int& K){
+	int idxPre = -1, idxNext = -1;
+	getPreNextIdx(idxPre, idxNext, itEdge);
+	//TODO 未判断点在边的前方还是后方
+	int idxA = itEdge->getA(), idxB = itEdge->getB(), idxC = itEdge->getOppPoint();
+	float* ptA = m_ps->m_point[idxA],
+		* ptB = m_ps->m_point[idxB],
+		* ptC = m_ps->m_point[idxC];
+	float eAB[3] = Edge(ptA,ptB);
+	float nABC[3], nABn[3];
+	itEdge->getPreTriangle()->getNorm(nABC);
+	eCross(nABn, eAB, nABC);
+	CPlane planeABn(nABn, ptA);
+
+	if (idxPre != -1){
+		float* ptP = m_ps->m_point[idxPre];
+		if (planeABn.iSameSide(ptP, ptC) <= 0)
+		{
+			float angelBAP = getAngel(idxPre, itEdge->getA(), itEdge->getB());
+			if (angelBAP > COS30 && angelBAP < COS90){
+				float angelABP = getAngel(itEdge->getA(), itEdge->getB(), idxPre);
+				float angelAPB = getAngel(itEdge->getA(), idxPre, itEdge->getB());
+				angelABP = min(angelABP, angelBAP);
+				angelAPB = min(angelAPB, angelABP);
+				if (angelAPB > COS20){
+					bestIdx = idxPre;
+					bFrontPoint = true;
+					return true;
+				}
+			}
+		}
+	}
+	if (idxNext != -1){
+		float* ptN = m_ps->m_point[idxNext];
+		if (planeABn.iSameSide(ptN, ptC) <= 0){
+			float angelABN = getAngel(itEdge->getA(), itEdge->getB(), idxNext);
+			if (angelABN > COS30 && angelABN < COS90){
+				float angelBAN = getAngel(itEdge->getB(), itEdge->getA(), idxNext);
+				float angelANB = getAngel(itEdge->getA(), idxNext, itEdge->getB());
+				angelBAN = min(angelBAN, angelABN);
+				angelANB = min(angelANB, angelBAN);
+				if (angelANB){
+					bestIdx = idxNext;
+					bFrontPoint = true;
+					return true;
+				}
+			}
+		}
+	}
+
+	float midAB[3] = { (ptA[0]+ptB[0])/2.0f, (ptA[1]+ptB[1])/2.0f, (ptA[2]+ptB[2])/2.0f };
+
+	ANNidxArray nnIdx = new ANNidx[K];
+	ANNdistArray dists = new ANNdist[K];
+	m_ps->m_kdTree->annkSearch(midAB, K, nnIdx, dists);
+	delete[] dists;
+
+	int vBestIdx = -1;
+	float minWeight = FLT_MAX;
+	for (int i = 0; i < K; ++i){
+		int idxCan = nnIdx[i];
+		if (INPOINT == m_bPointUsed[idxCan] || idxA == idxCan || idxB == idxCan || idxC == idxCan) continue;
+
+		float dihedralAngel = m_ps->getDihedralAngel(idxC, idxA, idxB, idxCan);
+		if (dihedralAngel > COS90) continue;
+		float minTriAngel = m_ps->getMinTriAngel(idxA, idxB, idxCan);
+		if (FRONTPOINT == m_bPointUsed[idxCan] && minTriAngel > COS15){
+			float weight = getIPDWeightTri(idxC, idxA, idxB, idxCan)-2;
+			if (minWeight > weight){
+				minWeight = weight;
+				vBestIdx = idxCan;
+			}
+		} else if (UNUSEDPOINT == m_bPointUsed[idxCan] && minTriAngel >  COS25){
+			float weight = getIPDWeightTri(idxC, idxA, idxB, idxCan);
+			if (minWeight > weight){
+				minWeight = weight;
+				vBestIdx = idxCan;
+			}
+		}
+	}
+	delete[] nnIdx;
+	if (vBestIdx != -1){
+		bestIdx = vBestIdx;
+		bFrontPoint = (FRONTPOINT == m_bPointUsed[vBestIdx]);
+		return true;
+	}
+	return false;
 }

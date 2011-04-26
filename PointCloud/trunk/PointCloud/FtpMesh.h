@@ -3,6 +3,8 @@
 
 #include "Mesh.h"
 #include <algorithm>
+#include <iterator>
+#include "Common/KdTree.h"
 using namespace std;
 #define FrontEdgeList list<CFrontEdge>
 #define FrontListIterator list<CFrontList>::iterator
@@ -16,23 +18,25 @@ public:
 
 public:
 	CFrontList():m_bOutRing(true){}
-	CFrontList(const CTriangle* pFace):m_bOutRing(true){
-		CFrontEdge a(pFace->getA(), pFace->getB()),
-			b(pFace->getB(), pFace->getC()),
-			c(pFace->getC(), pFace->getA());
-		a.setPreTriangle(pFace);
-		b.setPreTriangle(pFace);
-		c.setPreTriangle(pFace);
-		m_frontEdges.push_back(a);
-		m_frontEdges.push_back(b);
-		m_frontEdges.push_back(c);
-		m_frontVertexs.push_back(pFace->getA());
-		m_frontVertexs.push_back(pFace->getB());
-		m_frontVertexs.push_back(pFace->getC());
-	}
+// 	CFrontList(const CTriangle* pFace):m_bOutRing(true){
+// 		CFrontEdge a(pFace->getA(), pFace->getB()),
+// 			b(pFace->getB(), pFace->getC()),
+// 			c(pFace->getC(), pFace->getA());
+// 		a.setPreTriangle(pFace);
+// 		b.setPreTriangle(pFace);
+// 		c.setPreTriangle(pFace);
+// 		m_frontEdges.push_back(a);
+// 		m_frontEdges.push_back(b);
+// 		m_frontEdges.push_back(c);
+// 		m_frontVertexs.push_back(pFace->getA());
+// 		m_frontVertexs.push_back(pFace->getB());
+// 		m_frontVertexs.push_back(pFace->getC());
+// 	}
 	CFrontList(const CFrontList& src){
-		std::copy(src.m_frontEdges.begin(), src.m_frontEdges.end(), m_frontEdges.begin());
+		m_frontVertexs.resize(src.frontVertexsSize());
+		m_frontEdges.resize(src.frontVertexsSize());
 		std::copy(src.m_frontVertexs.begin(), src.m_frontVertexs.end(), m_frontVertexs.begin());
+		std::copy(src.m_frontEdges.begin(), src.m_frontEdges.end(), m_frontEdges.begin());
 		m_bOutRing = src.bOutRing();
 	}
 	CFrontList(FrontListIterator& frontList, FrontEdgeIterator& from, FrontEdgeIterator& to, bool bOutRing = false)
@@ -42,6 +46,8 @@ public:
 	}
 	CFrontList& operator=(const CFrontList& src){
 		if (this == &src) return *this;
+		m_frontVertexs.resize(src.frontVertexsSize());
+		m_frontEdges.resize(src.frontVertexsSize());
 		std::copy(src.m_frontEdges.begin(), src.m_frontEdges.end(), m_frontEdges.begin());
 		std::copy(src.m_frontVertexs.begin(), src.m_frontVertexs.end(), m_frontVertexs.begin());
 		m_bOutRing = src.bOutRing();
@@ -65,19 +71,16 @@ public:
 	void addVertex(const int vIdx) { m_frontVertexs.push_back(vIdx); }
 
 	//@ 向边界环上添加一个三角形（第一步）
-	void addFace(const CTriangle* pFace){
-		CFrontEdge a(pFace->getA(), pFace->getB()),
-			b(pFace->getB(), pFace->getC()),
-			c(pFace->getC(), pFace->getA());
-		a.setPreTriangle(pFace);
-		b.setPreTriangle(pFace);
-		c.setPreTriangle(pFace);
+	void addFace(CTriangle* pFace){
+		CFrontEdge a(pFace->getA(), pFace->getB(), pFace->getC(), pFace),
+			b(pFace->getB(), pFace->getC(), pFace->getA(), pFace),
+			c(pFace->getC(), pFace->getA(), pFace->getB(), pFace);
 		m_frontEdges.push_back(a);
 		m_frontEdges.push_back(b);
 		m_frontEdges.push_back(c);
-		m_frontVertexs.push_back(pFace->getA());
-		m_frontVertexs.push_back(pFace->getB());
-		m_frontVertexs.push_back(pFace->getC());
+		addVertex(pFace->getA());
+		addVertex(pFace->getB());
+		addVertex(pFace->getC());
 	}
 
 	//@ 查找itEdge的前一个iterator
@@ -137,18 +140,27 @@ struct FrontIter{
 class CFrontSet{
 public:
 	list<CFrontList> m_frontLists;	// 波前环链表
-	vector<short>& m_bPointStatus;	// 当前点状态
+	std::vector<short>& m_sPointStatus;	// 当前点状态
+	list<CFrontList> m_boundaryLists;	// 边界环链表
+
 public:
+	CFrontSet(vector<short>& sPointStatus):m_sPointStatus(sPointStatus){}
+
+public:
+	size_t frontListSize() const { return m_frontLists.size();}
+	void addFrontList(const CFrontList& frontList){ m_frontLists.push_back(frontList); }
+
 	//@ 对波前环链表按照环中边的个数进行排序
 	void sortFrontLists(){
 		//sort(m_frontLists.begin(), m_frontLists.end(), frontListCompare);
 	}
 	//@ 设置顶点的状态
 	void setPointStatus(int vIdx, short status =  INPOINT){
-		m_bPointStatus[vIdx] = status;
+		m_sPointStatus[vIdx] = status;
 	}
-	//@ 查看边的两个端点是否为边界点
-	void setPointBoundary(FrontIter& itFront){
+	//@ 设置边和其两个端点是为边界边和点
+	void setBoundary(FrontIter& itFront){
+		itFront.itEdge->setBoundary();
 		int A = itFront.itEdge->getA(), B = itFront.itEdge->getB();
 		FrontEdgeIterator pre = itFront.itList->preEdge(itFront.itEdge),
 			next = itFront.itList->nextEdge(itFront.itEdge);
@@ -232,6 +244,28 @@ public:
 			faceVector.push_back(pF2);
 		}
 	}
+
+	//@ 向波前环集合中添加一个三角形环
+	void addFace(CTriangle* pFace){
+		CFrontList newList;
+		newList.addFace(pFace);
+		addFrontList(newList);
+	}
+
+	//@ 获得当前边的上一条边
+	FrontIter preEdge(const FrontIter& itFront){
+		FrontIter it;
+		it.itList = itFront.itList;
+		it.itEdge = itFront.itList->preEdge(itFront.itEdge);
+		return it;
+	}
+	//@ 获得当前边的下一条边
+	FrontIter nextEdge(const FrontIter& itFront){
+		FrontIter it;
+		it.itList = itFront.itList;
+		it.itEdge = itFront.itList->nextEdge(itFront.itEdge);
+		return it;
+	}
 	//@ 从波前边链表集中获取一条活动边
 	bool getActiveEdge(FrontIter& itFront){
 		FrontListIterator itL = m_frontLists.begin();
@@ -247,11 +281,12 @@ public:
 				}
 				itE ++;
 			}
+			//TODO 将全是边界边的FrontList 移动到 m_boundaryLists 中
 			itL ++;
 		}
 		return false;
 	}
-	//@ 在波前环链表中查找点vIdx所在的环和边
+	//@ 在波前环链表中查找点vIdx所在的环和边 (边的起点为vIdx)
 	bool findVertex(FrontIter& itV, int vIdx){
 		for (FrontListIterator itL = m_frontLists.begin(); itL != m_frontLists.end() ; itL++)
 		{
@@ -270,17 +305,24 @@ public:
 	bool join(FrontIter& itEdge, int vIdx, bool bFront, vector<CTriangle*>& faceList);
 };
 
+class CPointCloudView;
+
 class CFTPMesh : public CMesh{
 public:
 	CFrontSet m_front;
-
+	KdTree* kdTree;
+	CPointCloudView* m_pView;
 public:
-	CFTPMesh(PointSet* ps):CMesh(ps){}
+	CFTPMesh(PointSet* ps, CPointCloudView* pView):CMesh(ps), m_front(m_bPointUsed), m_pView(pView){ kdTree = new KdTree(ps); }
+	~CFTPMesh(){	if (kdTree != NULL)	delete kdTree;	}
 
 public:
 	void start();
-	bool findSeedTriangle(CTriangle*& pFace);
-	bool getCandidatePoint(const FrontIter& itFront, int& vIdx);
+	bool findSeedTriangle(CTriangle*& pFace, int K =10);
+	bool getCandidatePoint(const FrontIter& itFront, int& vIdx, bool& bFrontVertex );
+
+	//=============Mesh 权值计算方法=============//
+public:
 };
 
 #endif

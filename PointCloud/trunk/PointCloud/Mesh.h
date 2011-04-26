@@ -11,7 +11,9 @@
 */
 class CEdge{
 public:
-	CEdge(int a, int b) { m_a = a; m_b = b; }
+	CEdge(int a, int b) : m_a(a), m_b(b){}
+	CEdge(const CEdge& src) : m_a(src.getA()),m_b(src.getB()){}
+
 	int getA() const { return m_a; }
 	int getB() const { return m_b; }
 	void setEdge(int a, int b) { m_a = a; m_b = b; }
@@ -36,9 +38,17 @@ class CTriangle;
 */
 class CFrontEdge : public CEdge{
 public:
-	CFrontEdge(int a = -1, int b = -1)
-		: CEdge(a, b), m_status(ACTIVE){ m_pPreTri = NULL; }
+	CFrontEdge(int a = -1, int b = -1,int c = -1, CTriangle* pFace = NULL)
+		: CEdge(a, b), m_status(ACTIVE),m_c(c), m_pPreTri(pFace){}
+	CFrontEdge(const CFrontEdge& src)
+		: CEdge(src), m_status(src.getStatus()),
+		m_c(src.getOppPoint()), m_pPreTri(src.getPreTriangle()){
+			setCenter(src.m_ballCenter);
+	}
 
+public:
+	int getOppPoint()const { return m_c; }	// 得到所在三角形的另一个顶点
+	void setOppPoint(const int c) { m_c = c; }
 	void setBoundary() { m_status = BOUNDARY; }
 	bool bBoundary() const { return m_status == BOUNDARY; }
 	int getStatus() const { return m_status; }
@@ -47,13 +57,14 @@ public:
 		m_ballCenter[1] = ballCenter[1];
 		m_ballCenter[2] = ballCenter[2];
 	}
-	void setPreTriangle(CTriangle* preTri){	m_pPreTri = preTri;	}
+	void setPreTriangle( CTriangle* preTri){	m_pPreTri = preTri;	}
 	CTriangle* getPreTriangle() const { return m_pPreTri; }
 	//bool operator==(const CFrontEdge& edge) {  return (getA() == edge.getA() && getB() == edge.getB()); }
 public:
-	int m_status;
-	float m_ballCenter[3];
-	CTriangle* m_pPreTri;
+	int m_status;						// 边的状态
+	int m_c;								// 上一个三角形的对应点
+	float m_ballCenter[3];		// 上一个三角形的球心
+	CTriangle* m_pPreTri;		// 上一个三角形
 };
 // TODO 最好将点的状态信息放到AF中
 const short  UNUSEDPOINT = 0;
@@ -62,6 +73,12 @@ const short  FRONTPOINT = 2;
 const short  BOUNDARYPOINT = -1;
 
 class AdvancingFront{
+public:
+	~AdvancingFront(){
+		m_frontEdgeList.clear();
+		m_boundaryEdgeList.clear();
+		m_vertexList.clear();
+	}
 public:
 	bool join(CFrontEdge& edge, int vertIdx, PointSet* ps, float ballCnt[3], CTriangle* newTriangle);
 	void addEdge(const CFrontEdge& edge) { m_frontEdgeList.push_back(edge); }
@@ -112,6 +129,7 @@ public:
 	}
 	CTriangle(const CTriangle& tri){
 		setTriVertexs(tri.getA(), tri.getB(), tri.getC());
+		m_norm = tri.m_norm;
 		setNeighbor(tri.getA(), (tri.getNeighbor(tri.getA())));
 		setNeighbor(tri.getB(), (tri.getNeighbor(tri.getB())));
 		setNeighbor(tri.getC(), (tri.getNeighbor(tri.getC())));
@@ -120,6 +138,12 @@ public:
 	int getA() const { return m_a; }
 	int getB() const { return m_b; }
 	int getC() const { return m_c; }
+	int vertex(int i)const {
+		if (0 == i) return m_a;
+		if (1 == i) return m_b;
+		if(2 == i) return m_c;
+		return -1;
+	}
 	int getVertex(const CEdge& edge) const {
 		if (m_a != edge.getA() && m_a!=edge.getB()) return m_a;
 		else if (m_b!=edge.getA() && m_b != edge.getB()) return m_b;
@@ -179,6 +203,11 @@ public:
 		 m_norm.negative();
 	 }
 	 vect3f& getNorm(){ return m_norm; }
+	 void getNorm(float norm[3]) const {
+		 norm[0] = m_norm.at(0);
+		 norm[1] = m_norm.at(1);
+		 norm[2] = m_norm.at(2);
+	 }
 
 private:
 	int m_a, m_b, m_c;	// 三角形的三个顶点
@@ -194,6 +223,11 @@ public:
 	CPlane():m_norm(0, 0,1), m_d(0){}
 	CPlane(const vect3f& norm, const float& d):m_norm(norm), m_d(d){ m_norm.unit(); }
 	CPlane(const vect3f& norm, const float pt[3]):m_norm(norm){
+		m_norm.unit();
+		m_d = -pt[0]*m_norm[0] - pt[1]*m_norm[1] - pt[2]*m_norm[2];
+	}
+	CPlane(const float norm[3], const float pt[3])
+		:m_norm(norm[0], norm[1], norm[2]){
 		m_norm.unit();
 		m_d = -pt[0]*m_norm[0] - pt[1]*m_norm[1] - pt[2]*m_norm[2];
 	}
@@ -238,7 +272,7 @@ public:
 	float ptDistToPlane(const float pt[3]) const {
 		return (pt[0]*a() + pt[1]*b() + pt[2]*c() + d());
 	}
-	//@ 判断两点A、B是否在平面的同一侧
+	//@ 判断两点A、B是否在平面的同一侧(1=同一侧/0=面上/-1=不同侧)
 	int iSameSide(const float ptA[3], const float ptB[3]) const{
 #define ZERO  1.0e-6
 		float lenA = ptDistToPlane(ptA),
@@ -262,14 +296,19 @@ public:
 // std::vector<bool> m_bPointUsed;	// 点是否被使用的标志
 public:
 	CMesh(PointSet* ps);
-	~CMesh(void);
+	virtual ~CMesh(void);
 
+public:
+	PointSet* pointSet() const { return m_ps; }
+	std::vector<CTriangle*>& faces() { return m_faceVects; }
+	std::vector<short>& pointStatus() { return m_bPointUsed; }
 public:
 	virtual void start() = 0;
 	virtual void writeToFile(char* pFileName);
 // 	void faceNormal();
 // 	void filpFaceNorm();
 	int checkHoles();
+	bool repair();
 
 	/* 返回从起始点开始的第一个未被使用的点序号，如果未找到返回-1
 		start为查找起始点	*/
@@ -278,6 +317,7 @@ public:
 	void setVertexUsed(const int& idx, short bUsed = FRONTPOINT){
 		m_bPointUsed[idx] = bUsed;
 	}
+	short getVertexStatus(const int& idx)const { return m_bPointUsed[idx];}
 	//@ 计算一条边的中点
 	void getEdgeMid(const CEdge& edge, float* pt){
 		int idxA = edge.getA(), idxB = edge.getB();
@@ -389,27 +429,9 @@ protected:
 protected:
 	//@ IPD算法中计算加权边长的值（取值越小越好）
 	float getIPDWeightTri(CFrontEdge& edge, int idxNext){
-		CTriangle* preTri = edge.getPreTriangle();
 		int idxA = edge.getA(), idxB = edge.getB();
-		int idxPre = preTri->getC();
-		if (idxPre == idxA || idxPre ==idxB){
-			idxPre = preTri->getA();
-			if (idxPre == idxA || idxPre == idxB)
-				idxPre = preTri->getB();
-		}
-		float lenAB2 = getEdgeLen2(idxA, idxB),
-				 lenAP2 = getEdgeLen2(idxA, idxPre),
-				 lenBP2 = getEdgeLen2(idxB, idxPre),
-				 lenAN2 = getEdgeLen2(idxA, idxNext),
-				 lenBN2 = getEdgeLen2(idxB, idxNext);
-		float triAreaPre = getTriArea(lenAB2, lenAP2, lenBP2),
-				 triAreaNext = getTriArea(lenAB2, lenAN2, lenBN2);	// 面积为0？？
-
-		float kAN = (lenAN2+lenBN2-lenAB2)/triAreaNext,
-				 kAB = (lenAP2+lenBP2-lenAB2)/triAreaPre +kAN;
-		kAN *= 2.0f;
-		float weight = kAB*lenAB2 + kAN*(lenAN2+lenBN2);
-		return weight;
+		int idxPre = edge.getOppPoint();
+		return getIPDWeightTri(idxPre, idxA, idxB, idxNext);
 	}
 	float getIPDWeightTri(int idxPre, int idxA, int idxB, int idxNext){
 		float lenAB2 = getEdgeLen2(idxA, idxB),
@@ -500,4 +522,5 @@ protected:
 		if (iSame < 0) return false;
 		return nextPlane.iSameSide(ptA, pt) >= 0;
 	}
+	bool getCandidatePoint(FrontEdgeIterator& itEdge, int& bestIdx, bool& bFrontPoint, const int& K);
 };
