@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "PointCloud.h"
 #include "Mesh.h"
+#include "FtpMesh.h"
 #include "PointCloudDoc.h"
 #include "PointCloudView.h"
 #include "SimplyParamDlg.h"
@@ -21,6 +22,7 @@ BEGIN_MESSAGE_MAP(CPointCloudDoc, CDocument)
 	ON_COMMAND(ID_EDIT_SIMPLY, &CPointCloudDoc::OnEditSimply)
 	ON_COMMAND(ID_MESH, &CPointCloudDoc::OnMesh)
 	ON_COMMAND(ID_EDIT_FLIP, &CPointCloudDoc::OnEditFlip)
+	ON_COMMAND(ID_FTPMESH, &CPointCloudDoc::OnFtpMesh)
 END_MESSAGE_MAP()
 
 // CPointCloudDoc ¹¹Ôì/Îö¹¹
@@ -34,10 +36,11 @@ CPointCloudDoc::CPointCloudDoc()
 
 CPointCloudDoc::~CPointCloudDoc()
 {
-	if (ps != NULL)
-		delete ps;
 	if (mesh != NULL)
 		delete mesh;
+	if (ps != NULL)
+		delete ps;
+	mesh = NULL;
 	ps = NULL;
 }
 
@@ -90,6 +93,10 @@ void CPointCloudDoc::OnFileOpen()
 		if (ps != NULL){
 			delete ps;
 			ps = NULL;
+		}
+		if (mesh != NULL){
+			delete mesh;
+			mesh = NULL;
 		}
 		CString filePath = dlg->GetPathName();
 		char* inFile = filePath.GetBuffer(1000);
@@ -163,4 +170,19 @@ void CPointCloudDoc::OnEditFlip()
 // 		mesh->filpFaceNorm();
 		drawData();
 	}
+}
+
+void CPointCloudDoc::OnFtpMesh()
+{
+	POSITION pos = GetFirstViewPosition();
+	if (!pos) return ;
+	CPointCloudView* pView = (CPointCloudView*)GetNextView(pos);
+	if (ps != NULL){
+		if (mesh!= NULL) delete mesh;
+		mesh = new CFTPMesh(ps, pView);
+		mode = MESHMODE;
+		mesh->start();
+		drawData();
+	}
+	
 }

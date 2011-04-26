@@ -6,6 +6,75 @@
 #include <assert.h>
 #include <stdio.h>
 
+//===========1-cos(a)=========//
+#define COS15 0.0340741737109317f
+#define COS20 0.0603073792140916f
+#define COS25 0.0936922129633500f
+#define COS30 0.1339745962155613f
+#define COS35 0.1808479557110082f
+#define COS40 0.23395555688102196f
+#define COS45 0.29289321881345247f
+#define COS50 0.35721239031346067f
+#define COS60 0.5f
+#define COS80 0.82635182233306965f
+#define COS90 1.0f
+#define COS120 1.5f
+
+#define Edge(ptA, ptB) { ptB[0] - ptA[0], ptB[1] - ptA[1], ptB[2] - ptA[2] }
+
+// 将x开平方后取倒数
+inline float InvSqrt(float x){
+	float xHalf = 0.5f*x;
+	int i = *(int*)&x;
+	i = 0x5f3759df - (i >>1);
+	x = *(float*)&i;
+	x = x*(1.5f - xHalf*x*x);
+	//x = x*(1.5f - xHalf*x*x); // 第二次迭代，可以增加精度
+	return x;
+}
+
+// 将 a[3] 取反  -a[3]
+inline void eReverse(float* a){
+	a[0] = -a[0];
+	a[1] = -a[1];
+	a[2] = -a[2];
+}
+// 计算两向量的叉乘  ret = a x b
+inline void eCross(float* ret, const float* a, const float* b){
+	ret[0] = a[1]*b[2] - a[2]*b[1];
+	ret[1] = a[2]*b[0] - a[0]*b[2];
+	ret[2] = a[0]*b[1] - a[1]*b[0];
+}
+#ifndef INVSQRT
+// 计算两向量余弦值
+inline float eCos(const float* a, const float* b){
+	return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]) / sqrt((a[0]*a[0]+a[1]*a[1]+a[2]*a[2]) * (b[0]*b[0]+b[1]*b[1]+b[2]*b[2]));
+}
+// 将向量 a[3] 单位化 ( a[3] 不全为零 )
+inline void eUnit(float a[3]){
+	float length = sqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2] );
+	length = 1.0f / length;
+	a[0] *= length;
+	a[1] *= length;
+	a[2] *= length;
+}
+#else
+inline float Sqrt(float x){
+	return 1.0f / InvSqrt(x);
+}
+// 计算两向量余弦值
+inline float eCos(const float* a, const float* b){
+	return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]) * InvSqrt( (a[0]*a[0]+a[1]*a[1]+a[2]*a[2]) * (b[0]*b[0]+b[1]*b[1]+b[2]*b[2]) );
+}
+// 将向量 a[3] 单位化 ( a[3] 不全为零 )
+inline void eUnit(float a[3]){
+	float length = InvSqrt( a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
+	a[0] *= length;
+	a[1] *= length;
+	a[2] *= length;
+}
+#endif
+
 class PointSet
 {
 public:
@@ -18,6 +87,7 @@ public:
 public:
 	PointSet(void);
 	~PointSet(void);
+	int getPointSize() const { return m_pointN; }
 
 	void readPts(char* name);
 	void clear();
@@ -157,5 +227,84 @@ protected:
 	int findNeedAdjust(int from, int** kNeighbors, bool* bAdjusted, int K);
 	void removePts(bool* bSimpled, bool* bSimpled2);
 	int simplyByRatio(bool* beSimpled, int** kNeighbors, int K, float* ratio);
+
+	//==============For Mesh Usage========================//
+public:
+	float* getPoint(int idx) const {  assert (idx < m_pointN); return m_point[idx]; }
+	ANNkd_tree* KdTree() const{ return m_kdTree; }
+	float length(const int& idxA, const int& idxB){
+		float* ptA = m_point[idxA],
+			* ptB = m_point[idxB];
+		return sqrt( (ptA[0]-ptB[0])*(ptA[0]-ptB[0])+(ptA[1]-ptB[1])*(ptA[1]-ptB[1])+(ptA[2]-ptB[2])*(ptA[2]-ptB[2]) );
+	}
+	float length2(const int& idxA, const int& idxB){
+		float* ptA = m_point[idxA],
+			* ptB = m_point[idxB];
+		return ( (ptA[0]-ptB[0])*(ptA[0]-ptB[0])+(ptA[1]-ptB[1])*(ptA[1]-ptB[1])+(ptA[2]-ptB[2])*(ptA[2]-ptB[2]) );
+	}
+	//@ 计算 CA+CB 的长度
+	float lengthSum(const int& idxC, const int& idxA, const int& idxB){
+		float* ptc = m_point[idxC], *pta = m_point[idxA], *ptb = m_point[idxB];
+		float ca = sqrt( (ptc[0]-pta[0])*(ptc[0]-pta[0]) + (ptc[1]-pta[1])*(ptc[1]-pta[1]) + (ptc[2]-pta[2])*(ptc[2]-pta[2]) ),
+			cb = sqrt( (ptc[0]-ptb[0])*(ptc[0]-ptb[0]) + (ptc[1]-ptb[1])*(ptc[1]-ptb[1]) + (ptc[2]-ptb[2])*(ptc[2]-ptb[2]) );
+		return ca+cb;
+	}
+	//@ 获得 Z 轴最大值所在的索引
+	int maxZIndex(){
+		float maxZ = m_point[0][2];
+		int idxZ = 0;
+		for (int i = 1; i < m_pointN; i++)
+		{
+			if (maxZ < m_point[i][2]){
+				maxZ = m_point[i][2];
+				idxZ = i;
+			}
+		}
+		return idxZ;
+	}
+	//@ 计算三角形内最小的内角, 返回1-cos(a) [ 0 -> 2 ] 随角度[0-180]递增
+	float getMinTriAngel(const int& idxA, const int& idxB, const int& idxC);
+	//@ 计算角 /_A = /_BAC 的 1-cosA [ 0->2 ] 随角度[0-180]递增
+	float getAngel(const int& idxA, const int& idxB, const int& idxC){
+		float* ptA = m_point[idxA],
+			* ptB = m_point[idxB],
+			* ptC = m_point[idxC];
+		float eAB[3] = {ptB[0] - ptA[0], ptB[1] - ptA[1], ptB[2] - ptA[2] },
+			eAC[3] = { ptC[0] - ptA[0], ptC[1] - ptA[1], ptC[2] - ptA[2] };
+
+		eUnit(eAB);	eUnit(eAC);
+		float angelA = 1.0f - eCos(eAB, eAC);
+		return angelA;
+	}
+	//@ 计算三角形 ABC 的面积
+	float getTriArea( const int& idxA, const int& idxB, const int& idxC ){
+		float* ptA = m_point[idxA],
+			* ptB = m_point[idxB],
+			* ptC = m_point[idxC];
+
+		float ab = sqrt( (ptA[0]-ptB[0])*(ptA[0]-ptB[0]) + (ptA[1]-ptB[1])*(ptA[1]-ptB[1]) + (ptA[2]-ptB[2])*(ptA[2]-ptB[2]) ),
+			bc = sqrt( (ptC[0]-ptB[0])*(ptC[0]-ptB[0]) + (ptC[1]-ptB[1])*(ptC[1]-ptB[1]) + (ptC[2]-ptB[2])*(ptC[2]-ptB[2]) ),
+			ac = sqrt( (ptA[0]-ptC[0])*(ptA[0]-ptC[0]) + (ptA[1]-ptC[1])*(ptA[1]-ptC[1]) + (ptA[2]-ptC[2])*(ptA[2]-ptC[2]) );
+		float p = (ab + bc + ac) * 0.5f;
+		float area = sqrt( p*(p-ab)*(p-bc)*(p-ac) );
+		return area;
+	}
+	//@ 计算两个三角形形成的二面角, 返回1-cos(a) [0-2]随角度[0-180]递增
+	float getDihedralAngel(const int& idxPre, const int& idxA, const int& idxB, const int& idxNext){
+		float* ptP = m_point[idxPre],
+			* ptA = m_point[idxA],
+			* ptB = m_point[idxB],
+			* ptN = m_point[idxNext];
+		float eAB[3] = Edge(ptA, ptB),
+			eAN[3] = Edge(ptA, ptN),
+			eAP[3] = Edge(ptA, ptP);
+		float eNormABN[3], eNormABP[3];
+		eCross(eNormABN, eAN, eAB);
+		eCross(eNormABP, eAB, eAP);
+		eUnit(eNormABN);
+		eUnit(eNormABP);
+		float angel = 1.0f - eCos(eNormABP, eNormABN);
+		return angel;
+	}
 };
 #endif

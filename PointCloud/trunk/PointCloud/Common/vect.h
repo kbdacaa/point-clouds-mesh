@@ -736,7 +736,7 @@ T vect3<T>::length2() const
 template <class T>
 void vect3<T>::unit()
 {
-	T len = 1 / (double) sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	T len = T(1 / (double) sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]));
 
 	v[0] *= len;
 	v[1] *= len;

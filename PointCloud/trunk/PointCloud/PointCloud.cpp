@@ -12,7 +12,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // CPointCloudApp
 
 BEGIN_MESSAGE_MAP(CPointCloudApp, CWinApp)
@@ -22,7 +21,6 @@ BEGIN_MESSAGE_MAP(CPointCloudApp, CWinApp)
 	ON_COMMAND(ID_FILE_OPEN, &CWinApp::OnFileOpen)
 END_MESSAGE_MAP()
 
-
 // CPointCloudApp 构造
 
 CPointCloudApp::CPointCloudApp()
@@ -31,11 +29,9 @@ CPointCloudApp::CPointCloudApp()
 	// 将所有重要的初始化放置在 InitInstance 中
 }
 
-
 // 唯一的一个 CPointCloudApp 对象
 
 CPointCloudApp theApp;
-
 
 // CPointCloudApp 初始化
 
@@ -50,7 +46,7 @@ BOOL CPointCloudApp::InitInstance()
 	// 公共控件类。
 	InitCtrls.dwICC = ICC_WIN95_CLASSES;
 	InitCommonControlsEx(&InitCtrls);
-
+	//_CrtSetBreakAlloc(1080);
 	CWinApp::InitInstance();
 
 	// 初始化 OLE 库
@@ -81,7 +77,6 @@ BOOL CPointCloudApp::InitInstance()
 		return FALSE;
 	AddDocTemplate(pDocTemplate);
 
-
 	// 启用“DDE 执行”
 	EnableShellOpen();
 	RegisterShellFileTypes(TRUE);
@@ -89,7 +84,6 @@ BOOL CPointCloudApp::InitInstance()
 	// 分析标准外壳命令、DDE、打开文件操作的命令行
 	CCommandLineInfo cmdInfo;
 	ParseCommandLine(cmdInfo);
-
 
 	// 调度在命令行中指定的命令。如果
 	// 用 /RegServer、/Register、/Unregserver 或 /Unregister 启动应用程序，则返回 FALSE。
@@ -105,8 +99,6 @@ BOOL CPointCloudApp::InitInstance()
 	m_pMainWnd->DragAcceptFiles();
 	return TRUE;
 }
-
-
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -145,6 +137,4 @@ void CPointCloudApp::OnAppAbout()
 	aboutDlg.DoModal();
 }
 
-
 // CPointCloudApp 消息处理程序
-

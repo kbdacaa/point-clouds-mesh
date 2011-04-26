@@ -118,6 +118,7 @@ BEGIN
         MENUITEM "面法矢逆向(&F)\tCtrl+F",           ID_EDIT_FLIP
         MENUITEM "复制(&C)\tCtrl+C",              ID_EDIT_COPY
         MENUITEM "粘贴(&P)\tCtrl+V",              ID_EDIT_PASTE
+        MENUITEM "FTPMESH",                     ID_FTPMESH
     END
     POPUP "视图(&V)"
     BEGIN
@@ -370,6 +371,7 @@ BEGIN
     ID_32772                "对点云进行网格化"
     ID_MESH                 "对点云进行网格化"
     ID_EDIT_FLIP            "将面法矢逆向"
+    ID_FTPMESH              "使用FTP方法进行网格化"
 END
 
 #endif    // 中文(简体，中国) resources

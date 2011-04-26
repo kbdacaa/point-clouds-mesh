@@ -281,8 +281,8 @@ void PointSet::removePts(bool* bSimpled, bool* bSimpled2){
 	delete[] m_weight;
 	if (m_kdTree!=0)
 		delete m_kdTree;
-	m_kdTree =0;
-	m_point = dataPts;
+	m_kdTree = 0;
+	m_point  = dataPts;
 	m_normal = normal;
 	m_weight = weight;
 }
@@ -308,4 +308,25 @@ bool PointSet::checkConsistence(int va, int vb, int vc){
 	normABC[2] = normA[2] + normB[2] + normC[2];
 	float cosAngle = normFace[0]*normABC[0]+normFace[1]*normABC[1]+normFace[2]*normABC[2];
 	return (cosAngle >= 0);
+}
+
+//===============For Mesh Usage==========================//
+
+float PointSet::getMinTriAngel( const int& idxA, const int& idxB, const int& idxC )
+{
+	float* ptA = m_point[idxA],
+		* ptB = m_point[idxB],
+		* ptC = m_point[idxC];
+	float eAB[3] = {ptB[0] - ptA[0], ptB[1] - ptA[1], ptB[2] - ptA[2] },
+		eAC[3] = { ptC[0] - ptA[0], ptC[1] - ptA[1], ptC[2] - ptA[2] },
+		eBC[3] = { ptC[0] - ptB[0], ptC[1] - ptB[1], ptC[2] - ptB[2] };
+
+	eUnit(eAB);	eUnit(eAC);	eUnit(eBC);
+
+	float angelA = 1.0f - eCos(eAB, eAC);
+	float angelB = 1.0f + eCos(eBC, eAB);
+	float angelC = 1.0f - eCos(eAC, eBC);
+
+	float minAB = min(angelA, angelB);
+	return min(minAB, angelC);
 }

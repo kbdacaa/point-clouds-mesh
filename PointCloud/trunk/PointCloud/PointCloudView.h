@@ -36,6 +36,8 @@ public:
 	float vx[3], vy[3], vz[3];
 	float shift_x, shift_y, shift_z;
 
+	bool bCtrlDown;
+	bool bLeftDown;
 // 操作
 public:
 
@@ -60,8 +62,10 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	void initGL(void);
-	void drawData(void);
-	void draw();
+	void draw(){
+		CDC* pDC = GetDC();
+		OnDraw(pDC);
+	}
 
 	void drawPoint(PointSet* ps);
 	void drawMesh(CMesh* mesh);
@@ -76,6 +80,7 @@ public:
 	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 public:
 	void drawAxis(void);
+	afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 };
 
 #ifndef _DEBUG  // PointCloudView.cpp 中的调试版本
