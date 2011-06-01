@@ -4,7 +4,7 @@
 #include "Mesh.h"
 #include <algorithm>
 #include <iterator>
-#include "Common/KdTree.h"
+//#include "Common/KdTree.h"
 using namespace std;
 #define FrontEdgeList list<CFrontEdge>
 #define FrontListIterator list<CFrontList>::iterator
@@ -176,13 +176,13 @@ public:
 			FrontEdgeIterator it = itList->frontEdges().begin(), itNext = it;
 			itNext++;
 			CTriangle* pFace = new CTriangle(it->getA(), it->getB(), itNext->getB());
-			it->getPreTriangle()->setNeighbor(it, pFace);
-			pFace->setNeighbor(it->getA(), itNext->getPreTriangle());
-			itNext->getPreTriangle()->setNeighbor(itNext, pFace);
-			pFace->setNeighbor(itNext->getB(), it->getPreTriangle());
-			itNext++;
-			itNext->getPreTriangle()->setNeighbor(itNext, pFace);
-			pFace->setNeighbor(it->getB(), itNext->getPreTriangle());
+// 			it->getPreTriangle()->setNeighbor(it, pFace);
+// 			pFace->setNeighbor(it->getA(), itNext->getPreTriangle());
+// 			itNext->getPreTriangle()->setNeighbor(itNext, pFace);
+// 			pFace->setNeighbor(itNext->getB(), it->getPreTriangle());
+// 			itNext++;
+// 			itNext->getPreTriangle()->setNeighbor(itNext, pFace);
+// 			pFace->setNeighbor(it->getB(), itNext->getPreTriangle());
 
 			faceVector.push_back(pFace);
 			m_frontLists.erase(itList);
@@ -191,17 +191,17 @@ public:
 				it = itE++, itN = itE++, itNN = it++;
 			CTriangle* pF1 = new CTriangle(it->getA(), it->getB(), itNN->getA()),
 							 * pF2 = new CTriangle(itNN->getA(), itNN->getB(), it->getA());
-			pF1->setNeighbor(itNN->getA(), it->getPreTriangle());
-			pF1->setNeighbor(it->getA(), itN->getPreTriangle());
-			pF1->setNeighbor(it->getB(), pF2);
-			it->getPreTriangle()->setNeighbor(it, pF1);
-			itN->getPreTriangle()->setNeighbor(itN, pF1);
-
-			pF2->setNeighbor(itNN->getB(), pF1);
-			pF2->setNeighbor(itNN->getA(), itE->getPreTriangle());
-			pF2->setNeighbor(it->getA(), itNN->getPreTriangle());
-			itE->getPreTriangle()->setNeighbor(itE, pF2);
-			itNN->getPreTriangle()->setNeighbor(itNN, pF2);
+// 			pF1->setNeighbor(itNN->getA(), it->getPreTriangle());
+// 			pF1->setNeighbor(it->getA(), itN->getPreTriangle());
+// 			pF1->setNeighbor(it->getB(), pF2);
+// 			it->getPreTriangle()->setNeighbor(it, pF1);
+// 			itN->getPreTriangle()->setNeighbor(itN, pF1);
+// 
+// 			pF2->setNeighbor(itNN->getB(), pF1);
+// 			pF2->setNeighbor(itNN->getA(), itE->getPreTriangle());
+// 			pF2->setNeighbor(it->getA(), itNN->getPreTriangle());
+// 			itE->getPreTriangle()->setNeighbor(itE, pF2);
+// 			itNN->getPreTriangle()->setNeighbor(itNN, pF2);
 
 			faceVector.push_back(pF1);
 			faceVector.push_back(pF2);
@@ -214,13 +214,13 @@ public:
 			FrontEdgeIterator it = frontList.frontEdges().begin(), itNext = it;
 			itNext++;
 			CTriangle* pFace = new CTriangle(it->getA(), it->getB(), itNext->getB());
-			it->getPreTriangle()->setNeighbor(it, pFace);
-			pFace->setNeighbor(it->getA(), itNext->getPreTriangle());
-			itNext->getPreTriangle()->setNeighbor(itNext, pFace);
-			pFace->setNeighbor(itNext->getB(), it->getPreTriangle());
-			itNext++;
-			itNext->getPreTriangle()->setNeighbor(itNext, pFace);
-			pFace->setNeighbor(it->getB(), itNext->getPreTriangle());
+// 			it->getPreTriangle()->setNeighbor(it, pFace);
+// 			pFace->setNeighbor(it->getA(), itNext->getPreTriangle());
+// 			itNext->getPreTriangle()->setNeighbor(itNext, pFace);
+// 			pFace->setNeighbor(itNext->getB(), it->getPreTriangle());
+// 			itNext++;
+// 			itNext->getPreTriangle()->setNeighbor(itNext, pFace);
+// 			pFace->setNeighbor(it->getB(), itNext->getPreTriangle());
 
 			faceVector.push_back(pFace);
 		}else if(size == 4){
@@ -228,17 +228,17 @@ public:
 				it = itE++, itN = itE++, itNN = it++;
 			CTriangle* pF1 = new CTriangle(it->getA(), it->getB(), itNN->getA()),
 				* pF2 = new CTriangle(itNN->getA(), itNN->getB(), it->getA());
-			pF1->setNeighbor(itNN->getA(), it->getPreTriangle());
-			pF1->setNeighbor(it->getA(), itN->getPreTriangle());
-			pF1->setNeighbor(it->getB(), pF2);
-			it->getPreTriangle()->setNeighbor(it, pF1);
-			itN->getPreTriangle()->setNeighbor(itN, pF1);
-
-			pF2->setNeighbor(itNN->getB(), pF1);
-			pF2->setNeighbor(itNN->getA(), itE->getPreTriangle());
-			pF2->setNeighbor(it->getA(), itNN->getPreTriangle());
-			itE->getPreTriangle()->setNeighbor(itE, pF2);
-			itNN->getPreTriangle()->setNeighbor(itNN, pF2);
+// 			pF1->setNeighbor(itNN->getA(), it->getPreTriangle());
+// 			pF1->setNeighbor(it->getA(), itN->getPreTriangle());
+// 			pF1->setNeighbor(it->getB(), pF2);
+// 			it->getPreTriangle()->setNeighbor(it, pF1);
+// 			itN->getPreTriangle()->setNeighbor(itN, pF1);
+// 
+// 			pF2->setNeighbor(itNN->getB(), pF1);
+// 			pF2->setNeighbor(itNN->getA(), itE->getPreTriangle());
+// 			pF2->setNeighbor(it->getA(), itNN->getPreTriangle());
+// 			itE->getPreTriangle()->setNeighbor(itE, pF2);
+// 			itNN->getPreTriangle()->setNeighbor(itNN, pF2);
 
 			faceVector.push_back(pF1);
 			faceVector.push_back(pF2);
@@ -310,11 +310,11 @@ class CPointCloudView;
 class CFTPMesh : public CMesh{
 public:
 	CFrontSet m_front;
-	KdTree* kdTree;
+	//KdTree* kdTree;
 	CPointCloudView* m_pView;
 public:
-	CFTPMesh(PointSet* ps, CPointCloudView* pView):CMesh(ps), m_front(m_bPointUsed), m_pView(pView){ kdTree = new KdTree(ps); }
-	~CFTPMesh(){	if (kdTree != NULL)	delete kdTree;	}
+	CFTPMesh(CPointSet* ps, CPointCloudView* pView):CMesh(ps), m_front(m_bPointUsed), m_pView(pView){ /*kdTree = new KdTree(ps); */}
+	~CFTPMesh(){	/*if (kdTree != NULL)	delete kdTree;*/	}
 
 public:
 	void start();

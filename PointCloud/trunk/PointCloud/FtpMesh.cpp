@@ -2,6 +2,11 @@
 #include "FtpMesh.h"
 #include "PointCloudView.h"
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+
 bool frontListCompare(const CFrontList& a, const CFrontList& b){
 	return a.frontEdgesSize() < b.frontEdgesSize();
 }
@@ -15,8 +20,8 @@ bool CFrontSet::join( FrontIter& itFront, int vIdx, bool bFront, vector<CTriangl
 			if (itV.itList == itFront.itList){
 				//+ 在同一个边界环上
 				CTriangle* pFace = new CTriangle(itFront.itEdge->getA(), vIdx, itFront.itEdge->getB());
-				pFace->setNeighbor(vIdx, itFront.itEdge->getPreTriangle());
-				itFront.itEdge->getPreTriangle()->setNeighbor(itFront.itEdge->getOppPoint(), pFace);
+// 				pFace->setNeighbor(vIdx, itFront.itEdge->getPreTriangle());
+// 				itFront.itEdge->getPreTriangle()->setNeighbor(itFront.itEdge->getOppPoint(), pFace);
 				faceVector.push_back(pFace);
 
 				// 当边界环为内环且边的个数为3或4时直接生成三角形
@@ -70,8 +75,8 @@ bool CFrontSet::join( FrontIter& itFront, int vIdx, bool bFront, vector<CTriangl
 				}else{
 					//! 同时为外环，需要将两个环合并为一个外环
 					CTriangle* pFace = new CTriangle(itFront.itEdge->getA(), vIdx, itFront.itEdge->getB());
-					pFace->setNeighbor(vIdx, itFront.itEdge->getPreTriangle());
-					itFront.itEdge->getPreTriangle()->setNeighbor(itFront.itEdge->getOppPoint(), pFace);
+// 					pFace->setNeighbor(vIdx, itFront.itEdge->getPreTriangle());
+// 					itFront.itEdge->getPreTriangle()->setNeighbor(itFront.itEdge->getOppPoint(), pFace);
 					faceVector.push_back(pFace);
 
 					CFrontEdge a(itFront.itEdge->getA(), vIdx, itFront.itEdge->getB(), pFace),
@@ -96,8 +101,8 @@ bool CFrontSet::join( FrontIter& itFront, int vIdx, bool bFront, vector<CTriangl
 	}else{
 		// 不在边界环上，直接添加两条边，去除当前边
 		CTriangle* pFace = new CTriangle(itFront.itEdge->getA(), vIdx, itFront.itEdge->getB());
-		pFace->setNeighbor(vIdx, itFront.itEdge->getPreTriangle());
-		itFront.itEdge->getPreTriangle()->setNeighbor(itFront.itEdge->getOppPoint(), pFace);
+// 		pFace->setNeighbor(vIdx, itFront.itEdge->getPreTriangle());
+// 		itFront.itEdge->getPreTriangle()->setNeighbor(itFront.itEdge->getOppPoint(), pFace);
 		faceVector.push_back(pFace);
 
 		CFrontEdge a(itFront.itEdge->getA(), vIdx, itFront.itEdge->getB(), pFace),
@@ -195,7 +200,7 @@ bool CFTPMesh::getCandidatePoint( const FrontIter& itFront, int& vIdx, bool& bFr
 	eUnit(nABn);
 	CPlane PnAB(nABn, ptA);// AB边形成的垂直面
 
-#define PREDICATER 0.707	// 前向预测半径
+#define PREDICATER 0.707f	// 前向预测半径
 	float r2 = lenAB*lenAB;	//球的半径的平方
 	lenAB *= PREDICATER;
 	float ptPredicate[3] = {// 前向预测点=球心
@@ -205,8 +210,8 @@ bool CFTPMesh::getCandidatePoint( const FrontIter& itFront, int& vIdx, bool& bFr
 	};
 
 #define MAX_K_PT  30		// 搜索半径 r 内的最大点数
-#define MIN_TRISNGEL 0.06031	// 三角形最小内角要大于 20' (1-cos(20'))
-#define MAX_DIHEDRALANGEL 1.0	// 两个三角形的二面角要小于90' (1-cos(90'))
+#define MIN_TRISNGEL 0.06031f	// 三角形最小内角要大于 20' (1-cos(20'))
+#define MAX_DIHEDRALANGEL 1.0f	// 两个三角形的二面角要小于90' (1-cos(90'))
 
 	int vBest = -1;
 	bool bFront = false;

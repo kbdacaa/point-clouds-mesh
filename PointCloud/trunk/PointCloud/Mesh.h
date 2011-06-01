@@ -80,7 +80,7 @@ public:
 		m_vertexList.clear();
 	}
 public:
-	bool join(CFrontEdge& edge, int vertIdx, PointSet* ps, float ballCnt[3], CTriangle* newTriangle);
+	bool join(CFrontEdge& edge, int vertIdx, CPointSet* ps, float ballCnt[3], CTriangle* newTriangle);
 	void addEdge(const CFrontEdge& edge) { m_frontEdgeList.push_back(edge); }
 	void addVertex(const int vertIdx) { m_vertexList.push_back(vertIdx); }
 	bool getActiveEdge(std::list<CFrontEdge>::iterator& itret){
@@ -114,105 +114,116 @@ public:
 	std::list<CFrontEdge>& frontEdgeList() { return m_frontEdgeList; }
 	int frontEdgeSize() const { return m_frontEdgeList.size(); }
 private:
-	std::list<CFrontEdge> m_frontEdgeList;	//+波前边链表+
-	std::list<CFrontEdge> m_boundaryEdgeList;	//+边界边链表+
-	std::list<int> m_vertexList;	//+波前边上顶点链表+
+	std::list<CFrontEdge> m_frontEdgeList;	// +波前边链表+
+	std::list<CFrontEdge> m_boundaryEdgeList;	// +边界边链表+
+	std::list<int> m_vertexList;	// +波前边上顶点链表+
 };
 // TODO:: 需要相邻三角面的指针
 class CTriangle{
+private:
+	int v[3];	// 三角形的三个顶点
+	float n[3];	// 三角形的法矢
+// 	CTriangle* m_pNeighbor[3];	// 三角形三个顶点对应的相邻三角形
+
 public:
-	CTriangle(int a = -1, int b = -1, int c = -1)
-		: m_a(a), m_b(b), m_c(c) {
-			m_pNeighbor[0] = NULL;
-			m_pNeighbor[1] = NULL;
-			m_pNeighbor[2] = NULL;
+	CTriangle(int a = -1, int b = -1, int c = -1){
+		v[0] = a;
+		v[1] = b;
+		v[2] = c;
+// 		m_pNeighbor[0] = NULL;
+// 		m_pNeighbor[1] = NULL;
+// 		m_pNeighbor[2] = NULL;
 	}
 	CTriangle(const CTriangle& tri){
 		setTriVertexs(tri.getA(), tri.getB(), tri.getC());
-		m_norm = tri.m_norm;
-		setNeighbor(tri.getA(), (tri.getNeighbor(tri.getA())));
-		setNeighbor(tri.getB(), (tri.getNeighbor(tri.getB())));
-		setNeighbor(tri.getC(), (tri.getNeighbor(tri.getC())));
+		float norm[3];
+		tri.getNorm(norm);
+		setNorm(norm);
+// 		setNeighbor(tri.getA(), (tri.getNeighbor(tri.getA())));
+// 		setNeighbor(tri.getB(), (tri.getNeighbor(tri.getB())));
+// 		setNeighbor(tri.getC(), (tri.getNeighbor(tri.getC())));
 	}
 
-	int getA() const { return m_a; }
-	int getB() const { return m_b; }
-	int getC() const { return m_c; }
-	int vertex(int i)const {
-		if (0 == i) return m_a;
-		if (1 == i) return m_b;
-		if(2 == i) return m_c;
-		return -1;
-	}
+	int getA() const { return v[0]; }
+	int getB() const { return v[1]; }
+	int getC() const { return v[2]; }
+	int vertex(int i)const {	assert(i > -1 && i < 3);return v[i]; }
+	void swapVertex(int i, int j) { int t = v[i]; v[i]=v[j]; v[j]=t; }
+
+	 //@ 计算三角形面的法矢
+	 void calcNorm(CPointSet* ps){
+		 float** points = ps->m_point;
+		 float* ptA = points[getA()],
+				 * ptB = points[getB()],
+				 * ptC = points[getC()];
+		 float eAB[3] = Edge(ptA, ptB);
+		 float eAC[3] = Edge(ptA, ptC);
+		 eCross(n, eAB, eAC);
+		 eUnit(n);
+	 }
+	 void filpNorm(){
+		 n[0] = -n[0];
+		 n[1] = -n[1];
+		 n[2] = -n[2];
+	 }
+	 void getNorm(float norm[3]) const {
+		 norm[0] = n[0];
+		 norm[1] = n[1];
+		 norm[2] = n[2];
+	 }
+	 float getNormIdx(int i) const { return n[i]; }
+	 void setNorm(const float norm[3]) {
+		 n[0] = norm[0];
+		 n[1] = norm[1];
+		 n[2] = norm[2];
+	 }
+
+public:	// ====== For FrontEdge Usage ===== //
 	int getVertex(const CEdge& edge) const {
-		if (m_a != edge.getA() && m_a!=edge.getB()) return m_a;
-		else if (m_b!=edge.getA() && m_b != edge.getB()) return m_b;
-		else if (m_c!=edge.getA() && m_c != edge.getB()) return m_c;
+		if (v[0] != edge.getA() && v[0]!=edge.getB()) return v[0];
+		else if (v[1]!=edge.getA() && v[1] != edge.getB()) return v[1];
+		else if (v[2]!=edge.getA() && v[2] != edge.getB()) return v[2];
 		else return -1;
 	}
-
-	void setTriVertexs(int a, int b, int c) { m_a = a; m_b = b; m_c = c; }
+	void setTriVertexs(int a, int b, int c) { v[0] = a; v[1] = b; v[2] = c; }
 	bool isTriEdge(const CEdge& e){
 		int a = e.getA();
 		int b = e.getB();
-		return ( (a == m_a || a == m_b || a == m_c) && (b == m_a || b == m_b || b == m_c));
+		return ( (a == v[0] || a == v[1] || a == v[2]) && (b == v[0] || b == v[1] || b == v[2]));
 	}
 	bool isTriVertex(const int idx){
-		return (m_a == idx || m_b == idx || m_c == idx);
+		return (v[0] == idx || v[1] == idx || v[2] == idx);
 	}
+/*
 	//! 此处假设idx是三角形的一个顶点
 	void setNeighbor(const int idx, CTriangle* pface){
-		if (idx == m_a) m_pNeighbor[0] = pface;
-		else if (idx == m_b) m_pNeighbor[1] = pface;
+		if (idx == v[0]) m_pNeighbor[0] = pface;
+		else if (idx == v[1]) m_pNeighbor[1] = pface;
 		else m_pNeighbor[2] = pface;
 	}
 	//! 此处假设edge必须是三角形的一条边
 	void setNeighbor(const CFrontEdge& edge, CTriangle* pface){
-		if (m_a != edge.getA() && m_a!=edge.getB()) setNeighbor(m_a, pface);
-		else if (m_b!=edge.getA() && m_b != edge.getB()) setNeighbor(m_b, pface);
-		else setNeighbor(m_c, pface);
+		if (v[0] != edge.getA() && v[0]!=edge.getB()) setNeighbor(v[0], pface);
+		else if (v[1]!=edge.getA() && v[1] != edge.getB()) setNeighbor(v[1], pface);
+		else setNeighbor(v[2], pface);
 	}
 	void setNeighbor(const FrontEdgeIterator& itEdge, CTriangle* pface){
-		if (m_a != itEdge->getA() && m_a!=itEdge->getB()) setNeighbor(m_a, pface);
-		else if (m_b!=itEdge->getA() && m_b != itEdge->getB()) setNeighbor(m_b, pface);
-		else setNeighbor(m_c, pface);
+		if (v[0] != itEdge->getA() && v[0]!=itEdge->getB()) setNeighbor(v[0], pface);
+		else if (v[1]!=itEdge->getA() && v[1] != itEdge->getB()) setNeighbor(v[1], pface);
+		else setNeighbor(v[2], pface);
 	}
 
 	// 返回对应顶点对应的邻居,如果不是三角形顶点返回NULL
 	 CTriangle* getNeighbor(int idx)const{
-		if (idx == m_a) return m_pNeighbor[0];
-		else if (idx == m_b) return m_pNeighbor[1];
-		else if (idx == m_c) return m_pNeighbor[2];
+		if (idx == v[0]) return m_pNeighbor[0];
+		else if (idx == v[1]) return m_pNeighbor[1];
+		else if (idx == v[2]) return m_pNeighbor[2];
 		return NULL;
 	}
 	 CTriangle* iNeighbor(int index) const{
 		 return m_pNeighbor[index];
 	 }
-	 //@ 计算三角形面的法矢
-	 void calcNorm(PointSet* ps){
-		 float** points = ps->m_point;
-		 float* ptA = points[getA()],
-				 * ptB = points[getB()],
-				 * ptC = points[getC()];
-		 vect3f vAB( ptB[0] - ptA[0], ptB[1] - ptA[1], ptB[2] - ptA[2]),
-			 vAC( ptC[0] - ptA[0], ptC[1] - ptA[1], ptC[2] - ptA[2]);
-		 vAB.cross(vAC);	// 与ABC面相垂直
-		 m_norm = vAB;
-	 }
-	 void filpNorm(){
-		 m_norm.negative();
-	 }
-	 vect3f& getNorm(){ return m_norm; }
-	 void getNorm(float norm[3]) const {
-		 norm[0] = m_norm.at(0);
-		 norm[1] = m_norm.at(1);
-		 norm[2] = m_norm.at(2);
-	 }
-
-private:
-	int m_a, m_b, m_c;	// 三角形的三个顶点
-	vect3f m_norm;	// 三角形的法矢
-	CTriangle* m_pNeighbor[3];	// 三角形三个顶点对应的相邻三角形
+*/
 };
 
 class CPlane{
@@ -231,7 +242,7 @@ public:
 		m_norm.unit();
 		m_d = -pt[0]*m_norm[0] - pt[1]*m_norm[1] - pt[2]*m_norm[2];
 	}
-	CPlane(const PointSet* ps, int idxA, int idxB, int idxC){
+	CPlane(const CPointSet* ps, int idxA, int idxB, int idxC){
 		float** pts = ps->m_point;
 		float* ptA = pts[idxA],
 			* ptB = pts[idxB],
@@ -285,39 +296,53 @@ public:
 	}
 };
 
+class TriList2;
 class CMesh
 {
 public:
-	PointSet* m_ps;
+	CPointSet* m_ps;
 	std::vector<CTriangle*> m_faceVects;
 	std::vector<short> m_bPointUsed;	// 代表当前点状态(>2时代表连接的边数)
-// std::vector<vect3f> m_faceNorms;
 // std::list<CTriangle> m_triList;
-// std::vector<bool> m_bPointUsed;	// 点是否被使用的标志
 public:
-	CMesh(PointSet* ps);
+	CMesh(CPointSet* ps);
 	virtual ~CMesh(void);
 
 public:
-	PointSet* pointSet() const { return m_ps; }
+	CPointSet* pointSet() const { return m_ps; }
 	std::vector<CTriangle*>& faces() { return m_faceVects; }
 	std::vector<short>& pointStatus() { return m_bPointUsed; }
 public:
 	virtual void start() = 0;
 	virtual void writeToFile(char* pFileName);
-// 	void faceNormal();
-// 	void filpFaceNorm();
-	int checkHoles();
-	bool repair();
+
+	void flipNormal(bool bFilpPointNorm = true){
+		std::vector<CTriangle*>::iterator itTri = m_faceVects.begin();
+		for (; itTri != m_faceVects.end(); ++itTri){
+			(*itTri)->filpNorm();
+		}
+		if (bFilpPointNorm) m_ps->flipNormal();
+	}
+	void computePointNormal();	// 使用面法矢来计算点法矢
+	void fillSmallHolesMinA(int T);
+	void fillPolygon(TriList2*& tri_list, int* v, int* f, int N);
+	void traceOpt(TriList2*& tri_list, int i, int k, int** opt, int* v);
+
+	void cleanBadTriangles();
+	bool sort1rings(bool* decideT, int* list, int N, int current, int* visitID);
+	bool getBest1ring(int*& blist, int& blistN, float& error, bool* decideT, bool* validT, int* list, int N, int current, int* visitID);
+	float measure1ringError( int * list, int N, int current );
 
 	/* 返回从起始点开始的第一个未被使用的点序号，如果未找到返回-1
 		start为查找起始点	*/
 	int  getFirstUnusedPt(int start = 0);
+
 	//@ 设置顶点的状态(使用/未使用)
 	void setVertexUsed(const int& idx, short bUsed = FRONTPOINT){
 		m_bPointUsed[idx] = bUsed;
 	}
 	short getVertexStatus(const int& idx)const { return m_bPointUsed[idx];}
+
 	//@ 计算一条边的中点
 	void getEdgeMid(const CEdge& edge, float* pt){
 		int idxA = edge.getA(), idxB = edge.getB();
@@ -334,6 +359,7 @@ public:
 		pt[1] = (ptA[1]+ptB[1])/2.0f;
 		pt[2] = (ptA[2]+ptB[2])/2.0f;
 	}
+
 	//@ 计算边长
 	float getEdgeLen(const CEdge& edge){
 		int idxA = edge.getA(), idxB = edge.getB();
@@ -346,6 +372,7 @@ public:
 				* ptB = m_ps->m_point[idxB];
 		return sqrt( (ptA[0]-ptB[0])*(ptA[0]-ptB[0])+(ptA[1]-ptB[1])*(ptA[1]-ptB[1])+(ptA[2]-ptB[2])*(ptA[2]-ptB[2]) );
 	}
+
 	//@ 计算边长的平方
 	float getEdgeLen2(const CEdge& edge){
 		int idxA = edge.getA(), idxB = edge.getB();
@@ -367,7 +394,7 @@ public:
 	float m_ballR;
 	AdvancingFront m_front;
 public:
-	CBpaMesh(PointSet* ps, int k = 15);
+	CBpaMesh(CPointSet* ps, int k = 15);
 	void start();
 	bool ballPivot(CFrontEdge& fontEdge, int& vertIdx, int idPrec);
 // 	void writeToFile(char* pFileName);
@@ -396,7 +423,7 @@ public:
 	CPointCloudView* pView;
 	AdvancingFront m_front;
 public:
-	CIPDMesh(PointSet* ps, CPointCloudView* pview = NULL):CMesh(ps){pView = pview; }
+	CIPDMesh(CPointSet* ps, CPointCloudView* pview = NULL):CMesh(ps){pView = pview; }
 	void start();
 	bool findSeedTriangle(CTriangle& face, int K = 15);
 	bool findSeedTriangle2(CTriangle*& pFace, int K = 15);
@@ -423,7 +450,7 @@ protected:
 	}
 	//@ 计算两个三角形形成的二面角, 返回1-cos(a) [0-2]随角度[0-180]递增
 	//float getDihedralAngel(const CTriangle* pPreFace, const int& idxPre, const int& idx);
-	float getDihedralAngel(const CFrontEdge& frontEdge, const int& idx);	// frontEdge需要指向前一个三角形的指针
+	float getDihedralAngel(const CFrontEdge& frontEdge, const int& idx);
 	float getDihedralAngel(const int& idxPre, const int& idxA, const int& idxB, const int& idxNext);
 
 protected:

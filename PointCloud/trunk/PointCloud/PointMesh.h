@@ -6,13 +6,51 @@
 #include <deque>
 using namespace std;
 
+//===== 快速排序算法=使用主键T1排序,T2跟随=======//
+template <class T1, class T2>
+inline int partition(T1* pData,T2* nnidx, int start, int end){
+	int i = start -1;
+	-- end;
+	T1 fD = pData[end];
+	T1 tmp;
+	T2 iD = nnidx[end];
+	T2 itmp;
+	for (int j = start; j < end; j++) {
+		if (pData[j] <= fD){
+			++ i;
+			tmp = pData[i];
+			pData[i] = pData[j];
+			pData[j] = tmp;
+
+			itmp = nnidx[i];
+			nnidx[i] = nnidx[j];
+			nnidx[j] = itmp;
+		}
+	}
+	++ i;
+	pData[end] = pData[i];
+	pData[i] = fD;
+	nnidx[end] = nnidx[i];
+	nnidx[i] = iD;
+	return i;
+}
+
+template <class T1, class T2>
+inline void quickSort( T1* arc, T2* nnidx, int start , int end){
+	if (end - start < 2) return ;
+	int i = partition(arc, nnidx, start, end);
+	quickSort(arc, nnidx, start, i);
+	quickSort(arc, nnidx, i+1, end);
+}
+//===== 波前点的状态=====//
 enum POINTSTATUS{
 	PS_INPOINT,				// 内点
 	PS_FRONTPOINT,		// 波前点
 	PS_BOUNDARY,		// 边界点，未封闭
-	PS_UNUSED				// 未使用点
+	PS_UNUSED,				// 未使用点
+	PS_DELETE					// 可以去除的点
 };
-
+//===== 波前点类 =======//
 class CPointFront{
 public:
 	size_t m_index;	// 当前点的编号
@@ -39,7 +77,7 @@ public:
 	size_t linkFront() const { return m_link.front(); }
 	size_t linkBack() const { return m_link.back(); }
 	list<size_t>& getLink()  { return m_link; }
-// 	size_t getLinkPoint(int i) const { return m_link[i]; }
+
 	//@ 判断当前点和index是否相连
 	bool existLink(const size_t index) const {
 		for (list<size_t>::const_iterator it = m_link.begin(); it != m_link.end() ; it++){
@@ -68,39 +106,81 @@ public:
 	size_t getIndex() const { return m_index; }
 };
 
+class CPointCloudView;
+// ===== 波前点扩展法 Mesh ==========//
 class CPointMesh{
 public:
-	PointSet* m_ps;
+	CPointCloudView* m_pView;
+	CPointSet* m_ps;
 	vector<CPointFront> m_links;
 	vector<CTriangle> m_faces;
 	deque<size_t> m_fontPoints;
+public:
+	float m_A, m_B;
+	int m_searchPointNum;	// 扩展时搜索的个数
 
 	typedef vector<CPointFront>::iterator PFIter;
 	typedef list<size_t> LinkList;
 	typedef list<size_t>::iterator LSIt;
 public:
-	CPointMesh(PointSet* ps):m_ps(ps){ m_links.resize(m_ps->getPointSize()); }
+	CPointMesh(CPointSet* ps, int spn = 12, float a=1.0f, float b=1.0f):m_ps(ps),m_A(a), m_B(b), m_searchPointNum(spn){}
+	CPointMesh(CPointSet* ps, CPointCloudView* pView, int spn = 12, float a=1.0f, float b=1.0f)
+		: m_pView(pView),m_ps(ps),m_A(a), m_B(b), m_searchPointNum(spn){}
+	~CPointMesh(){
+		m_links.clear();
+		m_faces.clear();
+	}
 
+public:
 	void start();
 	bool externPoint(size_t index);
+	void checkBoundaryPoint();
 
 	float arc(float eStart[3], float eVertical[3], float ePt[3]);
 	float arcNorm(float ptCenter[3], float ptStart[3], float eNorm[3], float pt[3]);
-	void sortArc(float* arc, int* index, int N);
-	void sortWith(list<size_t>& linkList,const int* nnIdx, int N);
-	void formTriangles(int index, int* indexs, int N);
-	void formTriangles2(int index, int* nnIdx, int N);
-	void formTriangles(int index,const ANNidx* nnidx, int start, int end, bool * bStatus);
+
+	void sortArc(float* arc, ANNidx* index, int N);
+	void sortWith(list<size_t>& linkList,const ANNidx* nnIdx, int N);
+
+	void formTriangles(size_t index, ANNidx* indexs, int N);
+	void formTriangles(size_t index,const ANNidx* nnidx, int start, int end, bool * bStatus);
+
+	void formTriangles2(size_t index, ANNidx* nnIdx, int N);
+	void formTriangles2(size_t iSeed,const ANNidx* nnidx, int start, int end, bool * bStatus);
+
 	bool satisfyTriRule(const size_t& idxo, const size_t& idxb, const size_t& idxc);
 
+	void filpNormal();
 protected:
 	void setPointStatus(const size_t index, POINTSTATUS ps = PS_INPOINT) { m_links[index].setStatus(ps); }
 	POINTSTATUS getPointStatus(const size_t index) const { return m_links[index].getStatus(); }
+
 	void addLinkBtw(const size_t index1, const size_t index2){
 		m_links[index1].addLinkBack(index2);
 		m_links[index2].addLinkBack(index1);
 	}
 	size_t getSeed(size_t start);
+
+	size_t findPrePoint(ANNidxArray nnidx, int iCur, bool* bLinkCenter, int N){
+		for (int j = iCur-1; j > 0; j--){
+			if (bLinkCenter[j]) return nnidx[j];
+		}
+		for (int i = N-1; i > iCur; i--)
+			if (bLinkCenter[i]) return nnidx[i];
+		return nnidx[iCur];
+	}
+
+public:
+	void startT();
+	void externSeedPoint(size_t iSeed);
+	void externSeedTriangles(size_t iSeed, ANNidx* nnIdx, int N);
+	int externFirstTriangle(size_t iSeed, ANNidx* nnIdx,int icur, int N);
+	void externFrontPoint(size_t iSeed);
+	void externFrontTriangles(size_t iSeed, ANNidx* nnIdx, int N);
+	void triBtwSE(size_t iSeed, size_t iPre, const ANNidx* nnidx, int start, int end, bool* bLinkedCenter);
+	int formOneTriangle(size_t iSeed, size_t iPre, const ANNidx* nnidx, int start, int end, bool* bLinkedCenter);
+	float computeSeedPointFit(float ptSeed[3], float ptCur[3], size_t iNext, float preNorm[3]);
+	float computeSeedPointFit(float ptSeed[3], float ptCur[3], size_t iNext);
 };
 
 //************************************
@@ -142,18 +222,8 @@ inline float CPointMesh::arcNorm(float ptCenter[3], float ptStart[3], float eNor
 // Parameter: int * index 序号数组
 // Parameter: int N 数组长度
 //************************************
-inline void CPointMesh::sortArc(float* arc, int* index, int N){
-	for (int i = 1; i < N ; i++) {
-		float tmp = arc[i];
-		int tmpi = index[i];
-		int j = i;
-		for (; j > 1 && tmp < arc[j-1]; j++) {
-			arc[j] = arc[j-1];
-			index[j] = index[j-1];
-		}
-		arc[j] = tmp;
-		index[j] = tmpi;
-	}
+inline void CPointMesh::sortArc(float* arc, ANNidx* index, int N){
+	quickSort(arc, index, 1, N);
 }
 
 inline bool CPointMesh::satisfyTriRule(const size_t& idxo, const size_t& idxb, const size_t& idxc){
@@ -161,27 +231,27 @@ inline bool CPointMesh::satisfyTriRule(const size_t& idxo, const size_t& idxb, c
 // 			* ptB = m_ps->m_point[idxb],
 // 			* ptC = m_ps->m_point[idxc];
 	float minTriAngel = m_ps->getMinTriAngel(idxo, idxb, idxc);
-	if (minTriAngel < COS20) return false;
+	if (minTriAngel < COS25) return false;
 	return true;
 }
 // 将linkList中的元素按照在nnIdx中的排列顺序进行排列
-inline void CPointMesh::sortWith(list<size_t>& linkList,const int* nnIdx, int N )
+inline void CPointMesh::sortWith(list<size_t>& linkList,const ANNidx* nnIdx, int N )
 {
 	typedef list<size_t>::iterator lIt;
 	if (linkList.size() > 1){
 		lIt itStart = linkList.begin(), itFind = itStart;
 		for (int i = 1; i < N ; i++) {
-			int curIndex = nnIdx[i];
+			ANNidx curIndex = nnIdx[i];
 
 			itFind = itStart;
 			bool bFind = false;
-			do {
+			while(itFind != linkList.end()){
 				if (curIndex == *itFind){
 					bFind = true;
 					break;
 				}
 				itFind++;
-			} while (itFind != linkList.end());
+			}
 
 			if (bFind){
 				if (itFind != itStart){
@@ -194,7 +264,7 @@ inline void CPointMesh::sortWith(list<size_t>& linkList,const int* nnIdx, int N 
 		}
 	}
 }
-
+// 如果未找到合适的种子，返回顶点个数
 inline size_t CPointMesh::getSeed(size_t start){
 	for (size_t t = start; t < m_links.size(); ++ t) {
 		if (PS_UNUSED == m_links[t].getStatus())

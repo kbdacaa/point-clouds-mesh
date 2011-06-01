@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "PointCloud.h"
 #include "MainFrm.h"
+#include "Common/FileReadPlug.h"
 
 #include "PointCloudDoc.h"
 #include "PointCloudView.h"
@@ -32,6 +33,7 @@ CPointCloudApp::CPointCloudApp()
 // 唯一的一个 CPointCloudApp 对象
 
 CPointCloudApp theApp;
+ExtRegister theExtRegPlugin;
 
 // CPointCloudApp 初始化
 
@@ -97,6 +99,13 @@ BOOL CPointCloudApp::InitInstance()
 	//  在 SDI 应用程序中，这应在 ProcessShellCommand  之后发生
 	// 启用拖/放
 	m_pMainWnd->DragAcceptFiles();
+
+	TCHAR szPath[MAX_PATH+1] = {0};
+	GetModuleFileName(NULL, szPath, MAX_PATH);
+	(_tcsrchr(szPath, _T('\\')))[1] = 0;
+	String plugPath(szPath);
+	plugPath.append(_T("plugin\\")) ;
+	theExtRegPlugin.loadExtDlls(plugPath);
 	return TRUE;
 }
 

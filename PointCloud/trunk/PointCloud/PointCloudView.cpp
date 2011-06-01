@@ -7,15 +7,16 @@
 #include "PointCloudDoc.h"
 #include "PointCloudView.h"
 #include "Mesh.h"
+#include "PointMesh.h"
 #include <math.h>
 
-/*
+#include "BallMesh/BallMesh.h"
+#define PI 3.1415926535897932384626433832795
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-*/
 
-// CPointCloudView
 
 IMPLEMENT_DYNCREATE(CPointCloudView, CView)
 
@@ -89,7 +90,7 @@ void CPointCloudView::OnDraw(CDC* pDC)
 	wglMakeCurrent(pDC->m_hDC, m_hRC);
 
 	//glClearColor(0.644, 0.828, 0.1875, 0.9);
-	glClearColor(0.4, 0.48, 0.175, 0.9);
+	glClearColor(0.4f, 0.48f, 0.175f, 0.9f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 // 	TRACE("%f, %f\n", Ry, Rz);
@@ -133,17 +134,17 @@ CPointCloudDoc* CPointCloudView::GetDocument() const // 非调试版本是内联的
 
 void CPointCloudView::initGL(void)
 {
-	GLfloat light_position1[4] = {-52, -16, -50, 0};
-	GLfloat light_position2[4] = {-26, -48, -50, 0};
-	GLfloat light_position3[4] = { 16, -52, -50, 0};
+	GLfloat light_position1[4] = {-520, -160, -500, 0};
+	GLfloat light_position2[4] = {-260, -480, -500, 0};
+	GLfloat light_position3[4] = { 160, -520, -500, 0};
 
 	GLfloat direction1[3] = {52,16,50};
 	GLfloat direction2[3] = {26,48,50};
 	GLfloat direction3[3] = {-16,52,50};
 
-	GLfloat light_position4[4] = {52, 16, 50, 0};
-	GLfloat light_position5[4] = {26, 48, 50, 0};
-	GLfloat light_position6[4] = {-16, 52, 50, 0};
+	GLfloat light_position4[4] = {520, 160, 500, 0};
+	GLfloat light_position5[4] = {260, 480, 500, 0};
+	GLfloat light_position6[4] = {-160, 520, 500, 0};
 
 	GLfloat direction4[3] = {-52,-16,-50};
 	GLfloat direction5[3] = {-26,-48,-50};
@@ -204,13 +205,13 @@ void CPointCloudView::initGL(void)
 
 	glEnable(GL_LIGHTING);
 
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_LIGHT2);
+// 	glEnable(GL_LIGHT0);
+// 	glEnable(GL_LIGHT1);
+// 	glEnable(GL_LIGHT2);
 
-// 	glEnable(GL_LIGHT3);
-// 	glEnable(GL_LIGHT4);
-// 	glEnable(GL_LIGHT5);
+	glEnable(GL_LIGHT3);
+	glEnable(GL_LIGHT4);
+	glEnable(GL_LIGHT5);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
@@ -387,30 +388,30 @@ void CPointCloudView::drawAxis(void)
 	glEnd();
 }
 
-void CPointCloudView::drawPoint(PointSet* ps){
+void CPointCloudView::drawPoint(CPointSet* ps){
 	glShadeModel(GL_SMOOTH);
 	int pointN = ps->m_pointN;
 	float **point = ps->m_point;
 	float (*normal)[3] = ps->m_normal;
-// 	if(normal == NULL){
+ 	if(normal == NULL){
 		glDisable(GL_LIGHTING);
 		glBegin(GL_POINTS);
 		{
-			glColor3f(0,0,0.7);
+			glColor3f(0.0f,0.0f,0.7f);
 			for(int i=0; i<pointN; i++)
 				glVertex3f(point[i][0], point[i][1], point[i][2]);
 		}
 		glEnd();
 		glEnable(GL_LIGHTING);
-// 	}
-// 	else{
-// 		glBegin(GL_POINTS);
-// 		for(int i=0; i<pointN; i++){
-// 			glNormal3f(-normal[i][0], -normal[i][1], -normal[i][2]);
-// 			glVertex3f(point[i][0], point[i][1], point[i][2]);
-// 		}
-// 		glEnd();
-// 	}
+	}
+	else{
+		glBegin(GL_POINTS);
+		for(int i=0; i<pointN; i++){
+			glNormal3f(-normal[i][0], -normal[i][1], -normal[i][2]);
+			glVertex3f(point[i][0], point[i][1], point[i][2]);
+		}
+		glEnd();
+	}
 }
 
 void CPointCloudView::drawMesh( CMesh* mesh )
@@ -424,27 +425,27 @@ void CPointCloudView::drawMesh( CMesh* mesh )
 
 	glBegin(GL_POINTS);
 	{
-		glColor3f(0,0,0.7);
+		glColor3f(0.0f,0.0f,0.7f);
 		for(int i=0; i<pointN; i++)
 			glVertex3f(ps[i][0], ps[i][1], ps[i][2]);
 	}
 	glEnd();
 	glEnable(GL_LIGHTING);
 
+	float norm[3];
 // 	for (int i = 0; i < nFace-1 ; i++)
 	for (int i = 0 ; i < nFace-1 ; i++)
 	{
 		CTriangle* face = mesh->m_faceVects.at(i);
-
-		vect3f& norm = face->getNorm();
+		face->getNorm(norm);
 		glBegin(GL_POLYGON);
 		{
 			glNormal3f(norm[0], norm[1], norm[2]);
 			glVertex3fv(ps[face->getA()]);
 			glVertex3fv(ps[face->getB()]);
 			glVertex3fv(ps[face->getC()]);
-			glEnd();
 		}
+		glEnd();
 	}
 	CTriangle* face = mesh->m_faceVects.at(nFace-1);
 	glDisable(GL_LIGHTING);
@@ -458,22 +459,203 @@ void CPointCloudView::drawMesh( CMesh* mesh )
 	glEnd();
 }
 
+void CPointCloudView::drawPointMesh(CPointMesh* pointMesh){
+	glShadeModel(GL_SMOOTH);
+	glDisable(GL_LIGHTING);
+	float** ps = pointMesh->m_ps->m_point;
+	int pointN = pointMesh->m_ps->m_pointN;
+	glBegin(GL_POINTS);
+	{
+		glColor3f(0.0f, 0.0f, 0.5f);
+		for(int i = 0; i < pointN; i++)
+			glVertex3f(ps[i][0], ps[i][1], ps[i][2]);
+	}
+	glEnd();
+// 	glEnable(GL_LIGHTING);
+	size_t size = pointMesh->m_faces.size();
+	float norm[3];
+	for (size_t t = 0; t < size; t++) {
+		CTriangle& face = pointMesh->m_faces.at(t);
+		face.getNorm(norm);
+		glBegin(GL_POLYGON);
+		{
+// 			glNormal3f(norm[0], norm[1], norm[2]);
+			glColor3f(0.6f, 0.0f, 0.4f);  glVertex3fv(ps[face.getA()]);
+			glColor3f(0.4f, 0.6f, 0.0f);  glVertex3fv(ps[face.getB()]);
+			glColor3f(0.0f, 0.4f, 0.6f);  glVertex3fv(ps[face.getC()]);
+		}
+		glEnd();
+	}
+}
+
+void CPointCloudView::drawPointMeshWithoutPoint(CPointMesh* pointMesh){
+	glShadeModel(GL_SMOOTH);
+	glDisable(GL_LIGHTING);
+	float** ps = pointMesh->m_ps->m_point;
+ 	glEnable(GL_LIGHTING);
+	size_t size = pointMesh->m_faces.size();
+	float norm[3];
+	for (size_t t = 0; t < size; t++) {
+		CTriangle& face = pointMesh->m_faces.at(t);
+		face.getNorm(norm);
+		glBegin(GL_POLYGON);
+		{
+			glNormal3f(norm[0], norm[1], norm[2]);
+			glColor3f(0.6f, 0.0f, 0.4f);  glVertex3fv(ps[face.getA()]);
+			glColor3f(0.4f, 0.6f, 0.0f);  glVertex3fv(ps[face.getB()]);
+			glColor3f(0.0f, 0.4f, 0.6f);  glVertex3fv(ps[face.getC()]);
+		}
+		glEnd();
+	}
+}
+
 void CPointCloudView::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
-	if (nChar == VK_LEFT){
-		shift_x -= 2;
-	}else if (nChar == VK_RIGHT){
-		shift_x += 2;
+	if (VK_LEFT == nChar){
+		shift_x -= 1;
+	}else if (VK_RIGHT == nChar){
+		shift_x += 1;
 	}else if (VK_UP == nChar){
-		shift_y += 2;
+		shift_y += 1;
 	}else if (VK_DOWN == nChar){
-		shift_y -= 2;
+		shift_y -= 1;
 	}else if (VK_ADD == nChar){
-		shift_z += 2;
+		shift_z += 1;
 	}else if (VK_SUBTRACT == nChar){
-		shift_z -= 2;
+		shift_z -= 1;
 	}
 	draw();
 
 	CView::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+//==========FOR BALLMESH============//
+void CPointCloudView::drawBalls( CPointSet* balls )
+{
+	glShadeModel(GL_SMOOTH);
+	int ballN = balls->m_pointN;
+	float **center = balls->m_point;
+	float *radius = balls->m_weight;
+	if (radius == NULL)	return ;
+	int k = 10;
+	if(isLPressed || isRPressed)
+		k = 5;
+	for(int i=0; i<ballN; i++)
+		sphere(radius[i], center[i], k);
+}
+
+void CPointCloudView::drawBallMesh( BallMesh* ballMesh )
+{
+	glShadeModel(GL_SMOOTH);
+	int faceN = ballMesh->faceN;
+	int (*face)[3] = ballMesh->face;
+	float (*normal_f)[3] = ballMesh->normal_f;
+	float (*vertex)[3] = ballMesh->vertex;
+	for(int i=0; i<faceN; i++){
+		int *f = face[i];
+		glBegin(GL_POLYGON);
+		glNormal3fv(normal_f[i]);
+		glVertex3fv(vertex[f[0]]);
+		glVertex3fv(vertex[f[1]]);
+		glVertex3fv(vertex[f[2]]);
+		glEnd();
+	}
+}
+
+void CPointCloudView::drawBallWire( BallMesh* ballMesh )
+{
+	glShadeModel(GL_SMOOTH);
+	int faceN = ballMesh->faceN;
+	int (*face)[3] = ballMesh->face;
+	float (*normal_v)[3] = ballMesh->normal_v;
+	float (*vertex)[3] = ballMesh->vertex;
+
+	glDisable(GL_LIGHTING);
+	glColor3f(1,1,1);
+	int i,j;
+	float d = (float)(0.05*view_angle/22.5);
+	for(i=0; i<faceN; i++){
+		int *f = face[i];
+		float p[3];
+		glBegin(GL_POLYGON);
+		{
+			for(j=0; j<3; j++){
+				p[0] = vertex[f[j]][0] - d*normal_v[f[j]][0];
+				p[1] = vertex[f[j]][1] - d*normal_v[f[j]][1];
+				p[2] = vertex[f[j]][2] - d*normal_v[f[j]][2];
+				glVertex3fv(p);
+			}
+		}
+		glEnd();
+	}
+
+	glColor3f(0,0,0);
+	for(i=0; i<faceN; i++){
+		if(face[i][0] < 0)
+			continue;
+		int *f = face[i];
+		for(j=0; j<3; j++){
+			int i1 = f[j];
+			int i2 = f[(j+1)%3];
+			if(i1 > i2){
+				glBegin(GL_LINES);
+				glVertex3fv(vertex[i1]);
+				glVertex3fv(vertex[i2]);
+				glEnd();
+			}
+		}
+	}
+	glEnable(GL_LIGHTING);
+}
+
+void CPointCloudView::sphere( float r, float p[], int n )
+{
+	float (**vertex)[3] = (float(**)[3])new float[n];
+	float (**normal)[3] = (float(**)[3])new float[n];
+	int i = 0;
+	for( i=0; i<n; i++){
+		vertex[i] = (float (*)[3])new float[n][3];
+		normal[i] = (float (*)[3])new float[n][3];
+	}
+
+	for(i=0; i<n; i++){
+		float u = (float)(PI*i/(n-1) - 0.5f*PI);
+		for(int j=0; j<n; j++){
+			float v = (float)(2*PI*j/(n-1));
+			normal[i][j][0] = (float)(cos(v)*cos(u));
+			normal[i][j][1] = (float)(sin(v)*cos(u));
+			normal[i][j][2] = (float)sin(u);
+
+			vertex[i][j][0] = (float)(r*normal[i][j][0] + p[0]);
+			vertex[i][j][1] = (float)(r*normal[i][j][1] + p[1]);
+			vertex[i][j][2] = (float)(r*normal[i][j][2] + p[2]);
+		}
+	}
+
+	for(i=0; i<n-1; i++){
+		for(int j=0; j<n-1; j++){
+			glBegin(GL_POLYGON);
+
+			glNormal3fv(normal[i][j]);
+			glVertex3fv(vertex[i][j]);
+
+			glNormal3fv(normal[i][j+1]);
+			glVertex3fv(vertex[i][j+1]);
+
+			glNormal3fv(normal[i+1][j+1]);
+			glVertex3fv(vertex[i+1][j+1]);
+
+			glNormal3fv(normal[i+1][j]);
+			glVertex3fv(vertex[i+1][j]);
+
+			glEnd();
+		}
+	}
+
+	for(i=0; i<n; i++){
+		delete[] vertex[i];
+		delete[] normal[i];
+	}
+	delete[] vertex;
+	delete[] normal;
 }
