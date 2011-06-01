@@ -21,21 +21,23 @@ void freeTArray(T** data, int nRow){
 	}
 }
 
-PointSet::PointSet(void)
+CPointSet::CPointSet(size_t N)
 {
-	m_pointN = 0;
+	m_pointN = N;
 	m_point = 0;
 	m_normal = 0;
 	m_kdTree = 0;
 	m_weight = 0;
+	if (N> 0)
+		m_point = annAllocPts(m_pointN, 3);
 }
 
-PointSet::~PointSet(void)
+CPointSet::~CPointSet(void)
 {
 	clear();
 }
 
-void PointSet::clear(){
+void CPointSet::clear(){
 	if (m_point!=0)
 		annDeallocPts(m_point);
 	if (m_normal!=0)
@@ -51,13 +53,14 @@ void PointSet::clear(){
 	m_kdTree = 0;
 }
 
-void PointSet::readPts(char* name){
+void CPointSet::readPts(char* name){
 	FILE* ptsFile;
 	if (fopen_s(&ptsFile, name, "r")!=0) return;
 	clear();
 
 	fscanf_s(ptsFile, "%d\n", &m_pointN);
 	m_point = annAllocPts(m_pointN, 3);
+	m_weight = new float[m_pointN];
 
 	int i = 0;
 	float a, b, c;
@@ -66,19 +69,20 @@ void PointSet::readPts(char* name){
 		m_point[i][0] = a;
 		m_point[i][1] = b;
 		m_point[i][2] = c;
+		m_weight[i] = 1.0f;
 		i++;
 	}
 	fclose(ptsFile);
 }
 
-void PointSet::constructKdTree(){
+void CPointSet::constructKdTree(){
 	if (m_kdTree!=0)
 		delete m_kdTree;
 
 	m_kdTree = new ANNkd_tree(m_point, m_pointN, 3);
 }
 
-void PointSet::computeNormal(int K){
+void CPointSet::computeNormalAndSimpled(int K){
 	if (m_kdTree==0)
 		constructKdTree();
 	if (m_normal !=0)
@@ -106,7 +110,7 @@ void PointSet::computeNormal(int K){
 			w += dists[j];
 			kNeighbors[i][j-1] = nnIdx[j];
 		}
-		setWeight(i, w/K);	//+K邻域点的平均距离+
+		setWeight(i, (float)w/K);	//+K邻域点的平均距离+
 		ratioA[i] = rate;
 	}
 	delete[] nnIdx;
@@ -126,9 +130,9 @@ void PointSet::computeNormal(int K){
 	+输入参数：K邻域个数，nPts点云总数；输出调整后的normPts+
 	+原理详见：逆向工程中点云邻域搜索及法矢估算相关算法研究+
 */
-void PointSet::adjustNormal(int** kNeighbors, int K)
+void CPointSet::adjustNormal(int** kNeighbors, int K)
 {
-	const float eps = 0.97;// 夹角余弦平方的阈值(0.85~0.97)
+	const float eps = 0.97f;// 夹角余弦平方的阈值(0.85~0.97)
 	int from = findSeedIdx(kNeighbors, K, eps);
 
 	if (from == -1) from = 0;		// 未能找到种子，需要减少eps的值
@@ -173,7 +177,7 @@ void PointSet::adjustNormal(int** kNeighbors, int K)
 	输入参数：kNeighbors[nPts][K]:点的邻域表, K:邻域点个数, eps:夹角余弦平方的阈值(0.85~0.97)
 	输出参数：满足条件的点的编号,如果无返回-1
 	原理详见：逆向工程中点云邻域搜索及法矢估算相关算法研究 */
-int PointSet::findSeedIdx(int** kNeighbors, int K, float eps){
+int CPointSet::findSeedIdx(int** kNeighbors, int K, float eps){
 	int i = 0;
 	while (i++ < m_pointN){
 		float* norm = m_normal[i];
@@ -196,7 +200,7 @@ int PointSet::findSeedIdx(int** kNeighbors, int K, float eps){
 /*
 	+查找当前已经调整过，但其邻域还需要调整的+
 */
-int PointSet::findNeedAdjust(int from, int** kNeighbors, bool* bAdjusted, int K){
+int CPointSet::findNeedAdjust(int from, int** kNeighbors, bool* bAdjusted, int K){
 	for (int i = from+1; i < m_pointN ; i++){
 		if (bAdjusted[i]){
 			for (int j =0; j < K; j++){
@@ -216,7 +220,7 @@ int PointSet::findNeedAdjust(int from, int** kNeighbors, bool* bAdjusted, int K)
 	return -1;
 }
 
-void PointSet::simplePts(int** kNeighbors, int K){
+void CPointSet::simplePts(int** kNeighbors, int K){
 	bool* beSimpledByCell = new bool[m_pointN];
 
 	simplyByCell(beSimpledByCell, 8.f, m_point, m_pointN);
@@ -225,7 +229,7 @@ void PointSet::simplePts(int** kNeighbors, int K){
 	delete[] beSimpledByCell;
 }
 
-int PointSet::simplyByRatio(bool* beSimpled, int** kNeighbors, int K, float* ratio){
+int CPointSet::simplyByRatio(bool* beSimpled, int** kNeighbors, int K, float* ratio){
 	float ratioSum = 0;
 	for (int i = 0; i < m_pointN ; i++){
 // 		beSimpled[i] = false;
@@ -246,7 +250,7 @@ int PointSet::simplyByRatio(bool* beSimpled, int** kNeighbors, int K, float* rat
 //************************************
 // 根据标志进行点云精简
 //************************************
-void PointSet::removePts(bool* bSimpled, bool* bSimpled2){
+void CPointSet::removePts(bool* bSimpled, bool* bSimpled2){
 	assert(bSimpled != NULL);
 	int pointN = 0;
 	if (bSimpled2 == NULL){
@@ -288,7 +292,7 @@ void PointSet::removePts(bool* bSimpled, bool* bSimpled2){
 }
 
 /*	检查AB*AC得到的面法矢和ABC的平均法矢方向是否相同	*/
-bool PointSet::checkConsistence(int va, int vb, int vc){
+bool CPointSet::checkConsistence(int va, int vb, int vc){
 	assert(m_normal != 0);
 	float* normA = m_normal[va];
 	float* normB = m_normal[vb];
@@ -312,7 +316,7 @@ bool PointSet::checkConsistence(int va, int vb, int vc){
 
 //===============For Mesh Usage==========================//
 
-float PointSet::getMinTriAngel( const int& idxA, const int& idxB, const int& idxC )
+float CPointSet::getMinTriAngel( const int& idxA, const int& idxB, const int& idxC )
 {
 	float* ptA = m_point[idxA],
 		* ptB = m_point[idxB],
@@ -329,4 +333,196 @@ float PointSet::getMinTriAngel( const int& idxA, const int& idxB, const int& idx
 
 	float minAB = min(angelA, angelB);
 	return min(minAB, angelC);
+}
+
+// ===== USED FOR POINTMESH ===== //
+void CPointSet::computeNormalWithCV(float norm[3], ANNidx* listIndex, int N){
+	float** point = m_point;
+	//+当前N个点的中心点+
+	float cx = 0, cy = 0, cz = 0;
+
+	int i  = 0;
+	for (i = 0; i < N; i++) {
+		float *p = point[listIndex[i]];
+		cx += p[0];
+		cy += p[1];
+		cz += p[2];
+	}
+	float Ni = 1.0f / N;
+	cx *= Ni;
+	cy *= Ni;
+	cz *= Ni;
+
+	//data for Jacobi method
+	double **A = new double *[4];
+	double **v = new double *[4];
+	double w[4];
+	int nrot;
+	for (i = 1; i < 4; i++) {
+		A[i] = new double[4];
+		A[i][1] = A[i][2] = A[i][3] = 0;
+		v[i] = new double[4];
+	}
+
+	//CV matrix
+	for (i = 0; i < N; i++) {
+		float *p = point[listIndex[i]];
+
+		float vx = p[0] - cx;
+		float vy = p[1] - cy;
+		float vz = p[2] - cz;
+
+		A[1][1] += vx * vx;
+		A[1][2] += vx * vy;
+		A[1][3] += vx * vz;
+
+		A[2][2] += vy * vy;
+		A[2][3] += vy * vz;
+
+		A[3][3] += vz * vz;
+	}
+	A[2][1] = A[1][2];
+	A[3][1] = A[1][3];
+	A[3][2] = A[3][2];
+
+	Jacobi::jacobi(A, 3, w, v, &nrot);
+
+	int mini;
+	if (fabs(w[1]) < fabs(w[2]))
+		mini = 1;
+	else
+		mini = 2;
+	if (fabs(w[mini]) > fabs(w[3]))
+		mini = 3;
+
+	norm[0] = (float)v[1][mini];
+	norm[1] = (float)v[2][mini];
+	norm[2] = (float)v[3][mini];
+
+	for (i = 1; i < 4; i++) {
+		delete []A[i];
+		delete []v[i];
+	}
+	delete []A;
+	delete []v;
+}
+
+void CPointSet::computeNormal(int K){
+	if (m_normal !=0)
+		return ;
+	m_normal = new float[m_pointN][3];
+	if (m_kdTree==0)
+		constructKdTree();
+	ANNidxArray nnIdx = new ANNidx[K+1];
+	ANNdistArray dists = new ANNdist[K+1];
+
+	for (int i = 0; i < m_pointN ; i++) {
+		float* queryPt = m_point[i];
+		m_kdTree->annkSearch(queryPt, K+1, nnIdx, dists);
+		float normal[3];						// 点的法矢
+		computeNormalWithCV(normal, nnIdx, K+1);
+		m_normal[i][0] = normal[0];
+		m_normal[i][1] = normal[1];
+		m_normal[i][2] = normal[2];
+	}
+	delete[] nnIdx;
+	delete[] dists;
+}
+
+void CPointSet::computeWeightAndNormal(int K){
+	if (m_normal !=0)
+		return ;
+	m_normal = new float[m_pointN][3];
+	if (m_weight == NULL)
+		m_weight = new float[m_pointN];
+	if (m_kdTree==0)
+		constructKdTree();
+	ANNidxArray nnIdx = new ANNidx[K+1];
+	ANNdistArray dists = new ANNdist[K+1];
+
+	for (int i = 0; i < m_pointN ; i++) {
+		float* queryPt = m_point[i];
+		m_kdTree->annkSearch(queryPt, K+1, nnIdx, dists);
+		double distSum = 0;
+		for (int j = 1; j < K+1 ; j++) {
+			distSum += dists[j];
+		}
+		m_weight[i] = (float)distSum / K;	// 点的权重
+		float normal[3];						// 点的法矢
+		computeNormalWithCV(normal, nnIdx, K+1);
+		m_normal[i][0] = normal[0];
+		m_normal[i][1] = normal[1];
+		m_normal[i][2] = normal[2];
+	}
+	delete[] nnIdx;
+	delete[] dists;
+}
+
+//=========独立的法矢调整方法==========//
+void CPointSet::adjustNormal(int K){
+	if (m_kdTree == 0)
+		m_kdTree = new ANNkd_tree(m_point, m_pointN, 3);
+
+	ANNidxArray nnIdx = new ANNidx[K+1];
+	ANNdistArray dists = new ANNdist[K+1];
+
+	int from = rand()%m_pointN;
+	int adjustPointNum = 1;
+
+	vector<bool> bNormalAdjusted;
+	bNormalAdjusted.resize(m_pointN, false);
+	bNormalAdjusted[from] = true;
+
+	while (adjustPointNum < m_pointN && from != -1){
+		float* normCenter = m_normal[from];
+		float biggestCos2 = 0;
+		int to = -1;
+
+		ANNpoint queryPt = m_point[from];
+		m_kdTree->annkSearch(queryPt, K+1, nnIdx, dists);
+
+		for (int j = 1; j < K+1; j ++){
+			if (bNormalAdjusted[ nnIdx[j] ]) continue;
+
+			float* normalAdjust = m_normal[ nnIdx[j] ];
+			float cos2a;
+			if ( needAdjust(cos2a, normCenter, normalAdjust) ) flipNorm(normalAdjust);
+			bNormalAdjusted[ nnIdx[j] ] = true;
+			adjustPointNum++;
+			if (cos2a > biggestCos2){
+				biggestCos2 = cos2a;
+				to = nnIdx[j];
+			}
+		}
+
+		if (to == -1){
+			from = findNeedAdjust(from, nnIdx, dists, bNormalAdjusted, K);
+		}else from = to;
+	}
+
+	bNormalAdjusted.clear();
+	delete[] nnIdx;
+	delete[] dists;
+}
+
+int CPointSet::findNeedAdjust(int from, ANNidxArray nnidx, ANNdistArray dists, vector<bool>& bNoramlAdjusted, int K){
+	for (int i = from+1; i < m_pointN; i++) {
+		if (bNoramlAdjusted[ i ]){
+			ANNpoint queryPt = m_point[i];
+			m_kdTree->annkSearch(queryPt, K+1, nnidx, dists);
+			for (int j = 1; j < K+1; j++){
+				if (!bNoramlAdjusted[ nnidx[j] ])	return i;
+			}
+		}
+	}
+	for (int i = 0; i < from; i++) {
+		if (bNoramlAdjusted[ i ]){
+			ANNpoint queryPt = m_point[i];
+			m_kdTree->annkSearch(queryPt, K+1, nnidx, dists);
+			for (int j = 1; j < K+1; j++){
+				if (!bNoramlAdjusted[ nnidx[j] ])	return i;
+			}
+		}
+	}
+	return -1;
 }

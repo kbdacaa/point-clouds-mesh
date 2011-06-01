@@ -13,8 +13,12 @@
 #pragma comment(lib, "glaux.lib")
 
 class CPointCloudDoc;
-class PointSet;
+class CPointSet;
 class CMesh;
+class CPointMesh;
+
+class BallMesh;
+
 class CPointCloudView : public CView
 {
 protected: // 仅从序列化创建
@@ -64,11 +68,19 @@ public:
 	void initGL(void);
 	void draw(){
 		CDC* pDC = GetDC();
+		if (pDC==NULL) return;
 		OnDraw(pDC);
 	}
 
-	void drawPoint(PointSet* ps);
+	void drawPoint(CPointSet* ps);
 	void drawMesh(CMesh* mesh);
+	void drawPointMesh(CPointMesh* pointMesh);
+	void drawPointMeshWithoutPoint(CPointMesh* pointMesh);
+
+	void drawBalls(CPointSet* balls);
+	void drawBallMesh(BallMesh* ballMesh);
+	void drawBallWire(BallMesh* ballMesh);
+	void sphere(float r, float p[], int n);
 public:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnDestroy();

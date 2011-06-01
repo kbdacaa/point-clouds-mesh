@@ -29,3 +29,4 @@ public:
 };
 
 extern CPointCloudApp theApp;
+/*extern ExtRegister theExtRegPlugin;*/

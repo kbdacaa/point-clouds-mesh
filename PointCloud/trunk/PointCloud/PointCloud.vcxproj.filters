@@ -13,188 +13,245 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="头文件\ANN">
+      <UniqueIdentifier>{e6320249-ecd1-43e8-9142-b9324539a8ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\NumberC">
+      <UniqueIdentifier>{8029cd83-445c-4cd7-a187-52a1cc54be64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\Cell">
+      <UniqueIdentifier>{691c70b0-5212-49df-af61-c3c84ce342c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\BallMesh">
+      <UniqueIdentifier>{83890e08-bb33-4cb3-9631-e207c747a17d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\PointCloud">
+      <UniqueIdentifier>{6b025776-7661-4032-a54c-7fab6712f781}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\ANN">
+      <UniqueIdentifier>{2b75f02e-0a62-4809-affb-d7950c58da44}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\PointCloud">
+      <UniqueIdentifier>{402a88e1-3d82-49e0-8e41-eb608cae8d66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="源文件\Common">
+      <UniqueIdentifier>{2a8032d9-9a4f-4b93-ac4e-cbfd07b1b045}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ANN\ANN.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\bd_fix_rad_search.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\bd_pr_search.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\bd_search.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\bd_tree.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\brute.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CellData.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Common.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\kd_dump.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\kd_fix_rad_search.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\kd_pr_search.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\kd_search.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\kd_split.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\kd_tree.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\kd_util.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MainFrm.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Mesh.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ANN\perf.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PointCloud.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PointCloudDoc.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="PointCloudView.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PointSet.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="SimplyParamDlg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="NumericalC\SVD.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="FtpMesh.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\tracealloc.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="PointMesh.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ANN\ANN.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\bd_fix_rad_search.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\bd_pr_search.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\bd_search.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\bd_tree.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\brute.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_dump.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_fix_rad_search.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_pr_search.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_search.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_split.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_tree.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\kd_util.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件\PointCloud</Filter>
+    </ClCompile>
+    <ClCompile Include="PointCloudView.cpp">
+      <Filter>源文件\PointCloud</Filter>
+    </ClCompile>
+    <ClCompile Include="PointCloudDoc.cpp">
+      <Filter>源文件\PointCloud</Filter>
+    </ClCompile>
+    <ClCompile Include="PointCloud.cpp">
+      <Filter>源文件\PointCloud</Filter>
+    </ClCompile>
+    <ClCompile Include="BallMesh\BallDialog.cpp">
+      <Filter>源文件\PointCloud</Filter>
+    </ClCompile>
+    <ClCompile Include="SimplyParamDlg.cpp">
+      <Filter>源文件\PointCloud</Filter>
+    </ClCompile>
+    <ClCompile Include="ANN\perf.cpp">
+      <Filter>源文件\ANN</Filter>
+    </ClCompile>
+    <ClCompile Include="NumericalC\SVD.cpp">
+      <Filter>头文件\NumberC</Filter>
+    </ClCompile>
+    <ClCompile Include="CellData.cpp">
+      <Filter>源文件\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common.cpp">
+      <Filter>源文件\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Common\tracealloc.cpp">
+      <Filter>源文件\Common</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrm.cpp">
+      <Filter>源文件\PointCloud</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Common.h">
-      <Filter>源文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\ANN.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\ANNperf.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\ANNx.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\array3d.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\bd_tree.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CellData.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="NumericalC\jacobi.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\kd_fix_rad_search.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\kd_pr_search.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\kd_search.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\kd_split.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\kd_tree.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\kd_util.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MainFrm.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Mesh.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="NumericalC\nrutil.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PointCloud.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PointCloudDoc.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PointCloudView.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="PointSet.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\pr_queue.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ANN\pr_queue_k.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SimplyParamDlg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="stdafx.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="NumericalC\SVD.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Common\vect.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="FtpMesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Common\KdTree.h">
+    <ClInclude Include="PointMesh.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\ANN.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\ANNperf.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\ANNx.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_fix_rad_search.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_pr_search.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_search.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_split.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_tree.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\kd_util.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\bd_tree.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\pr_queue.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="ANN\pr_queue_k.h">
+      <Filter>头文件\ANN</Filter>
+    </ClInclude>
+    <ClInclude Include="NumericalC\SVD.h">
+      <Filter>头文件\NumberC</Filter>
+    </ClInclude>
+    <ClInclude Include="NumericalC\nrutil.h">
+      <Filter>头文件\NumberC</Filter>
+    </ClInclude>
+    <ClInclude Include="NumericalC\jacobi.h">
+      <Filter>头文件\NumberC</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\array3d.h">
+      <Filter>头文件\Cell</Filter>
+    </ClInclude>
+    <ClInclude Include="CellData.h">
+      <Filter>头文件\Cell</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\vect.h">
+      <Filter>头文件\Cell</Filter>
+    </ClInclude>
+    <ClInclude Include="BallMesh\BallDialog.h">
+      <Filter>头文件\BallMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="BallMesh\Ball.h">
+      <Filter>头文件\BallMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="BallMesh\BallGenerator.h">
+      <Filter>头文件\BallMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="BallMesh\BallMesh.h">
+      <Filter>头文件\BallMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="BallMesh\BallMeshGenerator.h">
+      <Filter>头文件\BallMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="BallMesh\FileManager.h">
+      <Filter>头文件\BallMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="BallMesh\KdTree.h">
+      <Filter>头文件\BallMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloud.h">
+      <Filter>头文件\PointCloud</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloudDoc.h">
+      <Filter>头文件\PointCloud</Filter>
+    </ClInclude>
+    <ClInclude Include="PointCloudView.h">
+      <Filter>头文件\PointCloud</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件\PointCloud</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件\PointCloud</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrm.h">
+      <Filter>头文件\PointCloud</Filter>
+    </ClInclude>
+    <ClInclude Include="SimplyParamDlg.h">
+      <Filter>头文件\PointCloud</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>源文件\Common</Filter>
     </ClInclude>
     <ClInclude Include="Common\FileReadPlug.h">
+      <Filter>源文件\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="PointSet.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="PointMesh.h">
+    <ClInclude Include="Common\Otree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Simply\SimplyPlugin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Simply\OptimizeMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Simply\AdjustMesh.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -211,7 +268,6 @@
     <None Include="res\Toolbar.bmp">
       <Filter>资源文件</Filter>
     </None>
-    <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PointCloud.rc">

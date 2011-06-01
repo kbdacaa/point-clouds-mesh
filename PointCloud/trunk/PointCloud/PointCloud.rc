@@ -110,15 +110,31 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "退出(&X)",                      ID_APP_EXIT
     END
-    POPUP "点云前处理(&E)"
+    POPUP "前处理(&E)"
     BEGIN
         MENUITEM "精简(&J)\tCtrl+J",              ID_EDIT_SIMPLY
+        MENUITEM "非均匀网格曲率精简",                   ID_OCTSIM
+        MENUITEM SEPARATOR
+        MENUITEM "面法矢逆向(&F)\tCtrl+F",           ID_EDIT_FLIP
         MENUITEM SEPARATOR
         MENUITEM "网格化(&M)\tCtrl+M",             ID_MESH
-        MENUITEM "面法矢逆向(&F)\tCtrl+F",           ID_EDIT_FLIP
-        MENUITEM "复制(&C)\tCtrl+C",              ID_EDIT_COPY
-        MENUITEM "粘贴(&P)\tCtrl+V",              ID_EDIT_PASTE
         MENUITEM "FTPMESH",                     ID_FTPMESH
+        MENUITEM "PointMesh",                   ID_POINTMESH
+        MENUITEM "点扩展网格化",                      ID_POINTMESH2
+    END
+    POPUP "BallMesh"
+    BEGIN
+        MENUITEM "计算法矢和权重",                     ID_BALLMESH_NORMALANDWEIGHT
+        MENUITEM "生成自适应球",                      ID_BALLMESH_GENERATORBALL
+        MENUITEM "生成网格",                        ID_BALLMESH_GENERATORMESH
+        MENUITEM "优化网格",                        ID_BALLMESH_CLEANMESH
+        MENUITEM "法矢逆向",                        ID_BALLMESH_FILPNORMAL
+    END
+    POPUP "查看"
+    BEGIN
+        MENUITEM "显示网格",                        ID_SHOWMESH
+        MENUITEM "显示顶点",                        ID_SHOWPOINT
+        MENUITEM "显示边线",                        ID_SHOWWIRE
     END
     POPUP "视图(&V)"
     BEGIN
@@ -171,16 +187,29 @@ BEGIN
     DEFPUSHBUTTON   "确定",IDOK,178,7,50,16,WS_GROUP
 END
 
-IDD_DLG_SIMPLY DIALOGEX 0, 0, 339, 158
+IDD_DLG_SIMPLY DIALOGEX 0, 0, 173, 92
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "精简参数设置"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "确定",IDOK,214,137,50,14
-    PUSHBUTTON      "取消",IDCANCEL,282,137,50,14
-    GROUPBOX        "相关参数设置",IDC_STATIC,7,7,325,104
-    LTEXT           "每个邻域点个数K：",IDC_STATIC,25,26,69,8
+    DEFPUSHBUTTON   "确定",IDOK,24,60,50,14
+    PUSHBUTTON      "取消",IDCANCEL,103,60,50,14
+    GROUPBOX        "相关参数设置",IDC_STATIC,7,7,159,78
+    LTEXT           "邻域点个数K：",IDC_STATIC,25,26,53,8
     EDITTEXT        IDC_EDIT_K,100,23,58,14,ES_AUTOHSCROLL
+END
+
+IDD_DLG_BALLMESHSET DIALOGEX 0, 0, 177, 108
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "BallMesh参数设置"
+FONT 9, "Tahoma", 400, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "确定",IDOK,26,80,50,14
+    PUSHBUTTON      "取消",IDCANCEL,97,80,50,14
+    EDITTEXT        IDC_EDIT1,89,21,59,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,89,42,59,14,ES_AUTOHSCROLL
+    LTEXT           "精度：",IDC_STATIC,34,24,25,8
+    LTEXT           "影响域比值：",IDC_STATIC,34,45,49,8
 END
 
 
@@ -242,9 +271,17 @@ BEGIN
     IDD_DLG_SIMPLY, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 332
+        RIGHTMARGIN, 166
         TOPMARGIN, 7
-        BOTTOMMARGIN, 151
+        BOTTOMMARGIN, 85
+    END
+
+    IDD_DLG_BALLMESHSET, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 170
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 101
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -372,6 +409,12 @@ BEGIN
     ID_MESH                 "对点云进行网格化"
     ID_EDIT_FLIP            "将面法矢逆向"
     ID_FTPMESH              "使用FTP方法进行网格化"
+    ID_POINTMESH            "使用Point方法进行网格化"
+    ID_BALLMESH_NORMALANDWEIGHT "计算点云中各点的法向矢量和分配权重"
+    ID_BALLMESH_GENERATORBALL "根据参数生成自适应的球来覆盖点云表面"
+    ID_BALLMESH_GENERATORMESH "根据已经生成的自适应球来生成网格"
+    ID_BALLMESH_CLEANMESH   "对生成的网格进行清理和补洞"
+    ID_BALLMESH_FILPNORMAL  "将网格中面的法矢进行逆向"
 END
 
 #endif    // 中文(简体，中国) resources

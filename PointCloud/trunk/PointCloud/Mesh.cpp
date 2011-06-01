@@ -3,15 +3,15 @@
 #include <fstream>
 #include <iostream>
 #include "PointCloudView.h"
+#include "BallMesh/BallMesh.h"
 using namespace std;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
-#define _CRTDBG_MAP_ALLOC
 #endif
 //=====================AdvancingFront=========================//
 // TODO 此处需要生成一个新的三角面，这样才能设置当前新加入的边设置的指针
-bool AdvancingFront::join(CFrontEdge& edge, int vertIdx, PointSet* ps, float ballCnt[3], CTriangle* newTriangle){
+bool AdvancingFront::join(CFrontEdge& edge, int vertIdx, CPointSet* ps, float ballCnt[3], CTriangle* newTriangle){
 	bool used = IsVertexUsed(vertIdx);
 	list<CFrontEdge>::iterator it, toGlue[2];
 	int nbFound = 0;
@@ -54,8 +54,8 @@ bool AdvancingFront::join(CFrontEdge& edge, int vertIdx, PointSet* ps, float bal
 	a.setPreTriangle(newTriangle);
 	b.setPreTriangle(newTriangle);
 	// 设置相邻三角形的链接关系  共用边edge
-	newTriangle->setNeighbor(vertIdx, edge.getPreTriangle());
-	edge.getPreTriangle()->setNeighbor(edge, newTriangle);
+// 	newTriangle->setNeighbor(vertIdx, edge.getPreTriangle());
+// 	edge.getPreTriangle()->setNeighbor(edge, newTriangle);
 
 	m_frontEdgeList.remove(edge);
 
@@ -66,14 +66,14 @@ bool AdvancingFront::join(CFrontEdge& edge, int vertIdx, PointSet* ps, float bal
 			list<CFrontEdge>::iterator it = toGlue[i];
 			if ( (*it) == CEdge(a.getB(), a.getA()) ){
 				//  此处设置相邻面的指针
-				newTriangle->setNeighbor(idxB, it->getPreTriangle());
-				it->getPreTriangle()->setNeighbor(*it, newTriangle);
+// 				newTriangle->setNeighbor(idxB, it->getPreTriangle());
+// 				it->getPreTriangle()->setNeighbor(*it, newTriangle);
 				insertA = false;
 				m_frontEdgeList.erase(it);
 				m_vertexList.remove(idxA);
 			}else if ( (*it) == CEdge(b.getB(), b.getA()) ){
-				newTriangle->setNeighbor(idxA, it->getPreTriangle());
-				it->getPreTriangle()->setNeighbor(*it, newTriangle);
+// 				newTriangle->setNeighbor(idxA, it->getPreTriangle());
+// 				it->getPreTriangle()->setNeighbor(*it, newTriangle);
 				insertB = false;
 				m_frontEdgeList.erase(it);
 				m_vertexList.remove(idxB);
@@ -109,8 +109,8 @@ bool AdvancingFront::join( CFrontEdge& edge, int vertIdx, vector<short>& m_bPoin
 	}
 	// 设置两个三角形的相邻关系
 	newTriangle->setTriVertexs(edge.getA(), vertIdx, edge.getB());
-	edge.getPreTriangle()->setNeighbor(edge.getOppPoint(), newTriangle);
-	newTriangle->setNeighbor(vertIdx, edge.getPreTriangle());
+// 	edge.getPreTriangle()->setNeighbor(edge.getOppPoint(), newTriangle);
+// 	newTriangle->setNeighbor(vertIdx, edge.getPreTriangle());
 
 	if (itA == itB) {	// vertIdx不在波前边上|vertIdx在波前边上但没有要合并的边
 		if (iVertIdxOnFront == 0){	// 不在波前边上才需要添加
@@ -128,8 +128,8 @@ bool AdvancingFront::join( CFrontEdge& edge, int vertIdx, vector<short>& m_bPoin
 		m_frontEdgeList.remove(edge);
 	} else {	// vertIdx在波前边上
 		if (itA != m_frontEdgeList.end()){	// 边VA需要合并
-			newTriangle->setNeighbor(vertIdx, itA->getPreTriangle());
-			itA->getPreTriangle()->setNeighbor(itA->getOppPoint(), newTriangle);
+// 			newTriangle->setNeighbor(vertIdx, itA->getPreTriangle());
+// 			itA->getPreTriangle()->setNeighbor(itA->getOppPoint(), newTriangle);
 
 			m_frontEdgeList.remove(*itA);
 //			m_vertexList.remove(edge.getA());
@@ -140,8 +140,8 @@ bool AdvancingFront::join( CFrontEdge& edge, int vertIdx, vector<short>& m_bPoin
 		}
 
 		if (itB != m_frontEdgeList.end()){	// 边BV需要合并
-			newTriangle->setNeighbor(vertIdx, itB->getPreTriangle());
-			itB->getPreTriangle()->setNeighbor(itB->getOppPoint(), newTriangle);
+// 			newTriangle->setNeighbor(vertIdx, itB->getPreTriangle());
+// 			itB->getPreTriangle()->setNeighbor(itB->getOppPoint(), newTriangle);
 
 			m_frontEdgeList.remove(*itB);
 //			m_vertexList.remove(edge.getB());
@@ -160,7 +160,7 @@ bool AdvancingFront::join( CFrontEdge& edge, int vertIdx, vector<short>& m_bPoin
 	return true;
 }
 //=====================CMesh========================//
-CMesh::CMesh(PointSet* ps)
+CMesh::CMesh(CPointSet* ps)
 	: m_ps(ps)
 {
 	ps->constructKdTree();
@@ -220,88 +220,536 @@ int CMesh::getFirstUnusedPt( int start /*= 0*/ )
 	return -1;	// 全部已经使用了
 }
 
-/*
-void CMesh::faceNormal()
+void CMesh::computePointNormal()
 {
-	int nFaces = m_faceVects.size();
-	float** ps = m_ps->m_point;
-	int iA, iB, iC;
-	float* ptA, *ptB, *ptC;
+	m_ps->constructNormal();
+	float (*normal_v)[3] = m_ps->m_normal;
+	size_t vertexN = m_ps->getPointSize();
 
-	vector<CTriangle*>::iterator it = m_faceVects.begin();
-	for (; it != m_faceVects.end(); ++it)
-	{
-			iA = (*it)->getA();
-			iB = (*it)->getB();
-			iC = (*it)->getC();
-			ptA = ps[iA];
-			ptB = ps[iB];
-			ptC = ps[iC];
-			vect3f AB(ptB[0]-ptA[0], ptB[1]-ptA[1], ptB[2]-ptA[2]),
-				AC(ptC[0]-ptA[0], ptC[1]-ptA[1], ptC[2]-ptA[2]);
-			AB.cross(AC);
-			m_faceNorms.push_back(AB);
+	for (size_t i = 0; i < m_faceVects.size(); i++){
+		CTriangle* face = m_faceVects[i];
+		for (int j = 0; j < 3; j++){
+			float *nv = normal_v[face->vertex(j)];
+			nv[0] += face->getNormIdx(0);
+			nv[1] += face->getNormIdx(1);
+			nv[2] += face->getNormIdx(2);
+		}
+	}
+	for (size_t k = 0; k < vertexN; k++){
+		float* nv = normal_v[k];
+		eUnit(nv);
 	}
 }
 
-void CMesh::filpFaceNorm()
+void CMesh::fillSmallHolesMinA( int T )
 {
-	vector<vect3f>::iterator it = m_faceNorms.begin();
-	for (; it != m_faceNorms.end(); ++it)
-	{
-		it->negative();
+	int i, j, k;
+	int vertexN = m_ps->getPointSize();
+	int faceN = m_faceVects.size();
+	//==生成顶点的连接三角形个数==//
+	int* degree = new int[vertexN];	// 顶点连接三角形个数
+	for (i = 0; i< vertexN; i++)
+		degree[i] = 0;
+	for (i = 0; i < faceN ; i++) {
+		CTriangle* pFace = m_faceVects[i];
+		degree[pFace->vertex(0)]++;
+		degree[pFace->vertex(1)]++;
+		degree[pFace->vertex(2)]++;
 	}
-}
-*/
-
-int CMesh::checkHoles()
-{
-	int hole = 0;
-	vector<CTriangle*>::iterator it = m_faceVects.begin();
-	for (; it!= m_faceVects.end(); ++it)
-	{
-		CTriangle* pFace = *it;
-		CTriangle *pFA = NULL, *pFB = NULL, *pFC=NULL;
-		pFA = pFace->iNeighbor(0);
-		pFB = pFace->iNeighbor(1);
-		pFC = pFace->iNeighbor(2);
-		if (pFA == NULL || pFB == NULL || pFC==NULL)
-			hole++;
+	//==生成顶点的连接三角形序号==//
+	int ** link = new int *[vertexN];	// 顶点连接的三角形序号
+	for (i = 0; i < vertexN ; i++) {
+		link[i] = new int [degree[i]];
+		degree[i] = 0;
 	}
-	return hole;
-}
-
-bool CMesh::repair()
-{
-	int ptN = m_ps->m_pointN;
-	int* linkN = new int[ptN];	// 顶点相邻三角形个数
-	int** link = new int*[ptN];	// 顶点相邻三角形序号数组
-
-	for (int i = 0; i < ptN ; i++){
-		link[i] = NULL;
-		linkN = 0;
-	}
-
-	// 统计每一个顶点的相邻三角形
-	int triN = m_faceVects.size();
-	for (int i = 0; i < triN ; i++){
-		for (int j = 0; j < 3; j++) {
-			int idxPt = m_faceVects[i]->vertex(j);
-			int lN = linkN[idxPt];
-			int* l_tmp = new int[lN+1];
-			int* l_old = link[idxPt];
-			for(int k = 0; k < lN; k++)
-				l_tmp[k] = l_old[k];
-			l_tmp[lN] = i;
-			if(lN != 0) delete[] l_old;
-			link[idxPt] = l_tmp;
-			linkN[idxPt] ++;
+	for ( i = 0; i < faceN ; i++) {
+		CTriangle* f = m_faceVects[i];
+		for (j =0; j < 3; j++){
+			k = f->vertex(j);
+			link[k][degree[k]++] = i;
 		}
 	}
 
+	int ** linkT = new int *[vertexN];
+	for ( i = 0; i < vertexN ; i++) {
+		int degT = degree[i];// 顶点 i 相邻三角形个数
+		int degE = 0;
+		int * lT = link[i];
+		int * lE = new int [2*degT];	//TODO Mem leak
+		int * lF = new int [2*degT];	//TODO Mem leak
+
+		for (j = 0; j < degT; j++) {
+			CTriangle* f = m_faceVects[ lT[j] ];
+			int v = f->vertex(0);
+			if (f->vertex(0) == i)	v = f->vertex(1);
+			else if (f->vertex(1) == i)	v = f->vertex(2);
+
+			for (k = 0; k < degT; k++) {
+				if (j == k) continue;
+				CTriangle* f1 = m_faceVects[ lT[k] ];
+				if (f1->vertex(0) == v || f1->vertex(1) == v || f1->vertex(2) == v) break;
+			}
+
+			if (k == degT){
+				lE[degE] = v;
+				lF[degE] = lT[j];
+				degE++;
+			}
+		}
+
+		for (j = 0; j < degT; j++){
+			CTriangle* f = m_faceVects[ lT[j] ];
+			int v = f->vertex(1);
+			if (f->vertex(0) == i)	v = f->vertex(2);
+			else if (f->vertex(1) == i)	v = f->vertex(0);
+
+			for (k = 0; k < degT; k++) {
+				if (j == k) continue;
+				CTriangle* f1 = m_faceVects[ lT[k] ];
+				if (f1->vertex(0) == v || f1->vertex(1) == v || f1->vertex(2) == v) break;
+			}
+
+			if (k == degT){
+				lE[degE] = v;
+				lF[degE] = lT[j];
+				degE++;
+			}
+		}
+
+		degree[i] = degE;
+		delete[] lT;
+		if (degE == 0){
+			delete[] lE;
+			delete[] lF;
+		}else {
+			link[i] = lE;
+			linkT[i] = lF;
+		}
+	}
+
+	bool* visit = new bool[vertexN];
+	for (i = 0; i < vertexN; i++)		visit[i] = false;
+	int top;
+	int * stack = new int [T+1];
+	int * stackF = new int [T+1];
+	TriList2* tri_list = new TriList2(-1, -1, -1);
+	for (i = 0; i < vertexN; i++){
+		if (visit[i] == true)	continue;
+
+		top = 0;
+		stack[0] = i;
+		visit[i] = true;
+
+		bool isFilled = false;
+		while (top < T){
+			int index = stack[top];
+			if (degree[index] < 2){
+				if (degree[index] != 0){
+					delete[] link[index];
+					degree[index] = 0;
+				}
+				break;
+			}
+
+			int next = link[index][0];
+			int f = linkT[index][0];
+			stackF[top] = f;
+
+			delete[] link[index];
+			delete[] linkT[index];
+			degree[index] = 0;
+
+			if (next == i){
+				isFilled = true;
+				break;
+			}
+			if (visit[next])	break;
+			stack[++top] = next;
+			visit[next] = true;
+		}
+
+		if (!isFilled) continue;
+		int size = top + 1;
+		fillPolygon(tri_list, stack, stackF, size);
+	}
+	delete[] stack;
+	delete[] stackF;
+	delete[] visit;
 	delete[] link;
-	delete[] linkN;
+	delete[] linkT;
+	delete[] degree;
+
+	//====将生成的空洞三角形添加到链表后===//
+	TriList2* l;
+// 	int N = 0;	// 空洞三角形个数
+// 	for (l = tri_list; l != NULL; l = l->next)	N++;
+// 	N--;
+
+	for (l = tri_list; l->next != NULL; l = l->next){
+		CTriangle* pFace = new CTriangle(l->i0, l->i1, l->i2);
+		pFace->calcNorm(m_ps);
+		m_faceVects.push_back(pFace);
+	}
+	delete tri_list;
+}
+
+void CMesh::fillPolygon( TriList2*& tri_list, int* v, int* f, int N )
+{
+	float** area = new float*[N];
+	float** angle = new float*[N];
+	int ** opt = new int*[N];
+	int i, j, k, m;
+	for (i = 0; i < N; i++){
+		area[i] = new float[N];
+		angle[i] = new float[N];
+		opt[i] = new int[N];
+	}
+	for (i = 0; i < N-1; i++){
+		angle[i][i+1] = 0.0f;
+		area[i][i+1] = 0.0f;
+	}
+
+	for (i = 0; i<N-2; i++){
+		area[i][i+2] = m_ps->areaF(v[i], v[i+1], v[i+2]);
+		float a1 = m_ps->dihedral(v[i], v[i+1], v[i+2], m_faceVects[ f[i] ]->vertex(0), m_faceVects[ f[i] ]->vertex(2), m_faceVects[ f[i] ]->vertex(1));
+		float a2 = m_ps->dihedral(v[i], v[i+1], v[i+2], m_faceVects[ f[i+1] ]->vertex(0), m_faceVects[ f[+1] ]->vertex(2), m_faceVects[ f[i+1] ]->vertex(1));
+		if (a1 > a2)
+			angle[i][i+2] = a1;
+		else
+			angle[i][i+2] = a2;
+		opt[i][i+2] = i+1;
+	}
+
+	for (j = 3; j < N; j++){
+	    for (i = 0; i < N - j; i++){
+	        k = i+j;
+	        area[i][k] = 1000000.0f;
+	        angle[i][k] = 1000000.0f;
+	        for (m=i+1; m<k;m++){
+				float a = area[i][m] + area[m][k] + m_ps->areaF(v[i], v[m], v[k]);
+				float a1, a2;
+				if (i+1 == m)
+					a1 = m_ps->dihedral( v[i], v[m], v[k], m_faceVects[ f[i] ]->vertex(0), m_faceVects[ f[i] ]->vertex(2), m_faceVects[ f[i] ]->vertex(1));
+				else
+					a1 = m_ps->dihedral(v[i], v[m], v[k], v[i], v[opt[i][m]], v[m]);
+				if (m+1 == k)
+					a2 = m_ps->dihedral(v[i], v[m], v[k],  m_faceVects[ f[m] ]->vertex(0), m_faceVects[ f[m] ]->vertex(2), m_faceVects[ f[m] ]->vertex(1));
+				else
+					a2 = m_ps->dihedral(v[i], v[m], v[k], v[m], v[opt[m][k]], v[k]);
+				float maxA = a1;
+				if (maxA < a2) maxA = a2;
+				if (maxA < angle[i][m]) maxA = angle[i][m];
+				if (maxA < angle[m][k]) maxA = angle[m][k];
+				if (maxA < angle[i][k]){
+					area[i][k] = a;
+					angle[i][k] = maxA;
+					opt[i][k] = m;
+				} else if (maxA == angle[i][k]){
+					if (a < area[i][k]){
+						area[i][k] = a;
+						//angle[i][k] = maxA;
+						opt[i][k] = m;
+					}
+				}
+			}
+		}
+	}
+	traceOpt(tri_list, 0, N-1, opt, v);
+	for (i = 0; i<  N; i++) {
+		delete[] area[i];
+		delete[] opt[i];
+		delete[] angle[i];
+	}
+	delete[] area;
+	delete[] opt;
+	delete[] angle;
+}
+
+void CMesh::traceOpt( TriList2*& tri_list, int i, int k, int** opt, int* v )
+{
+	if (i + 2 == k)
+		tri_list = tri_list->add(v[i], v[k], v[i+1]);
+	else {
+		int o = opt[i][k];
+		if (o != i+1)
+			traceOpt(tri_list, i, o, opt, v);
+		tri_list = tri_list->add(v[i], v[k], v[o]);
+		if (o != k-1)
+			traceOpt(tri_list, o, k, opt, v);
+	}
+}
+
+void CMesh::cleanBadTriangles()
+{
+	int i, j;
+	int N = m_ps->getPointSize();
+	int triN = m_faceVects.size();
+
+	bool * decideT = new bool[triN];
+	bool * decideV = new bool[N];
+	int ** link = new int*[N];
+	int * linkN = new int [N];
+
+	for(i = 0; i < N; i++){
+		link[i] = NULL;
+		linkN[i] = 0;
+		decideV[i] = false;
+	}
+	for (i = 0; i < triN; i++){
+		decideT[i] = false;
+		for (j = 0; j< 3; j++){
+			int index = m_faceVects[i]->vertex(j);
+
+			int lN = linkN[index];
+			int* l = link[index];
+			int* l_tmp = new int[lN+1];
+			for (int k = 0; k < lN; k++)	l_tmp[k] = l[k];
+			l_tmp[lN] = i;
+			if (lN != 0) delete[] l;
+			link[index] = l_tmp;
+			linkN[index]++;
+		}
+	}
+
+	int* visitID = new int[N];
+	for (i = 0; i < N; i++)	visitID[i] = -1;
+
+	float min_error = 10000000000.0f;
+	int seed = -1;
+	for ( i = 0; i < N ; i++) {
+		if (linkN[i] == 0) continue;
+		if (sort1rings(decideT, link[i], linkN[i], i, visitID)){
+			float e = measure1ringError(link[i], linkN[i], i);
+			if ( e < min_error && e > 0){
+				seed = i;
+				min_error = e;
+			}
+		}
+	}
+	delete[] visitID;
+	if( seed < 0 ){
+		delete[] decideT;
+		delete[] decideV;
+		delete[] linkN;
+		for (i = 0; i < N; i++)
+			if (link[i] != NULL) delete[] link[i];
+		delete[] link;
+		cout<<"未能找到合适的种子环!"<<endl;
+		cout<<"可能是由于点云噪声过大引起的!"<<endl;
+		cout<<"无法进行清理，退出清理过程!"<<endl;
+		return ;
+	}
+
+	visitID = new int [triN];
+	bool * validT = new bool [triN];
+	for ( i= 0; i < triN; i++){
+		visitID[i] = -1;
+		validT[i] = true;
+		decideT[i] = false;
+	}
+	sort1rings( decideT, link[seed], linkN[seed], seed, visitID );
+
+	float * cost = new float[N];
+	int * heap = new int [N+1];
+	int * index = new int [N];
+	int last_heap = 0;
+	for ( i = 0; i < N; i++){
+		cost[i] = 1000000000000.0f;
+		index[i] =  - 1;
+	}
+
+	int * best, bestN;
+	getBest1ring(best, bestN, cost[seed], decideT, validT, link[seed], linkN[seed], seed, visitID);
+	delete best;
+}
+
+bool CMesh::sort1rings( bool* decideT, int* list, int N, int current, int* visitID )
+{
+	if (N < 3) return false;
+	int i;
+	int start = list[0];
+	for (i = 0; i < N; i++){
+		if (decideT[ list[i] ]) {
+			start = list[i];
+			break;
+		}
+	}
+
+	int end = start;
+	do {
+		CTriangle* ti = m_faceVects[end];
+		int v = ti->vertex(0);
+		if (ti->vertex(0) == current)	v = ti->vertex(1);
+		else if (ti->vertex(1) == current) v = ti->vertex(2);
+
+		if (visitID[v] == current)	return false;
+		visitID[v] = current;
+
+		bool flag = false;
+		int next;
+		for (i = 0; i< N; i++){
+			int s = list[i];
+			if (s == end) continue;
+
+			ti = m_faceVects[s];
+			int ver_id;
+			if (ti->vertex(0) == v) ver_id = 0;
+			else if (ti->vertex(1) == v) ver_id = 1;
+			else if (ti->vertex(2) == v) ver_id = 2;
+			else continue;
+
+			if (flag) return false;
+			flag = true;
+			next = s;
+			int i1 = (ver_id+1)%3;
+			if (ti->vertex(i1) != current){
+				int i2 = (ver_id+2)%3;
+				ti->swapVertex(i1, i2);
+			}
+		}
+		if (!flag)	return false;
+
+		end = next;
+	}while(start != end);
+
+	for (i = 0; i < N; i++)
+		decideT[ list[i] ] = true;
 	return true;
+}
+
+bool CMesh::getBest1ring(int * &blist, int &blistN, float &error, bool *decideT, bool *validT, int *list, int N, int current, int *visitID) {
+	blist = NULL;
+	blistN = 0;
+
+	int * stack = new int [N+1];
+	int top = -1;
+	int start = -1;
+	int i ;
+	for (i = 0; i< N; i++){
+		if ( decideT[ list[i] ] && validT[ list[i] ] ){
+			start = i;
+			break;
+		}
+	}
+	if (start < 0){
+		delete[] stack;
+		return false;
+	}
+
+	CTriangle* ti = m_faceVects[ list[start] ];
+	int startV = ti->vertex(1);
+	if (ti->vertex(0) == current) startV = ti->vertex(2);
+	else if (ti->vertex(1) == current) startV = ti->vertex(0);
+
+	stack[++top] = start;
+	stack[++top] = -1;
+	while (top > 0){
+		int t_id = list[ stack[top-1] ];
+		CTriangle* tid = m_faceVects[t_id];
+		int v = tid->vertex(0);
+		if (tid->vertex(0) == current)	v = tid->vertex(1);
+		else if (tid->vertex(1) == current) v = tid->vertex(2);
+
+		if (v == startV){
+			int * list_tmp = new int [top];
+			for (i = 0; i< top; i++)	list_tmp[i] = list[ stack[i] ];
+
+			bool flag = true;
+			for ( i = 0; i< N; i++){
+				if (!decideT[ list[i] ]) continue;
+				bool flag1 = false;
+				for (int j = 0; j < top; j++){
+					if (list_tmp[j] == list[i]){
+						flag1 = true;
+						break;
+					}
+				}
+
+				if (!flag1) {
+					flag = false;
+					break;
+				}
+			}
+
+			if (flag){
+				float error_tmp = measure1ringError(list_tmp, top, current);
+				if (blistN == 0 || error_tmp < error){
+					error = error_tmp;
+					delete blist;
+					blist = list_tmp;
+					blistN = top;
+				}else	delete list_tmp;
+			}else delete list_tmp;
+			top--;
+			continue;
+		}
+
+		visitID[t_id] = current;
+		bool flag = false;
+		if ( stack[top] < 0) i = 0;
+		else i = stack[top] +1;
+
+		top --;
+		for (; i< N; i++){
+			if ( i == stack[top] || visitID[ list[i] ] == current || !validT[ list[i] ]) continue;
+
+			tid = m_faceVects[ list[i] ];
+			int ver_id;
+			if ( tid->vertex(0) == v)	ver_id = 0;
+			else if (tid->vertex(1) == v) ver_id = 1;
+			else if (tid->vertex(2) == v) ver_id = 2;
+			else continue;
+
+			if (decideT[ list[i] ]){
+				int i1 = (ver_id +1)%3;
+				if ( tid->vertex(i1) != current) continue;
+			}
+
+			flag = true;
+			stack[++top] = i;
+			int i1 = (ver_id +1) % 3;
+			if (tid->vertex(i1) != current){
+				int i2 = (ver_id +2) % 3;
+				tid->swapVertex(i1, i2);
+			}
+			break;
+		}
+		if (flag) stack[++top] = -1;
+		else visitID[t_id] = -1;
+	}
+	delete[] stack;
+
+	if (blistN < 3) return false;
+
+	for (i = 0; i < blistN; i++) {
+		if (i + 1 == blistN)	continue;
+
+		int j = blist[i];
+		ti = m_faceVects[j];
+		int v = ti->vertex(0);
+		if (ti->vertex(0) == current) 		   v = ti->vertex(1);
+		else if (ti->vertex(1) == current)  v = ti->vertex(2);
+
+		ti = m_faceVects[ blist[i + 1] ];
+		int ver_id = 2;
+		if (ti->vertex(0) == v)	     ver_id = 0;
+		else if (ti->vertex(1) == v) ver_id = 1;
+
+		int i1 = (ver_id + 1) % 3;
+		if (ti->vertex(i1) != current) {
+			int i2 = (ver_id + 2) % 3;
+			ti->swapVertex(i1, i2);
+		}
+	}
+	return true;
+}
+
+float CMesh::measure1ringError( int * list, int N, int current )
+{
+	if (N < 3) return 100000.0f;
+	float** verts = m_ps->m_point;
+	//TODO
+	return 0.0f;
 }
 
 //==================CBPAMESH====================//
@@ -418,7 +866,7 @@ bool CBpaMesh::findSeedTriange( CTriangle& face, float ballCenter[3] )
 	return false;
 }
 
-CBpaMesh::CBpaMesh(PointSet* ps, int k)
+CBpaMesh::CBpaMesh(CPointSet* ps, int k)
 	: CMesh(ps)
 {
 	m_K = k;
@@ -685,11 +1133,6 @@ float CIPDMesh::getTriArea( const int& idxA, const int& idxB, const int& idxC )
 	float area = sqrt( p*(p-ab)*(p-bc)*(p-ac) );
 	return area;
 }
-
-/*
-float CIPDMesh::getDihedralAngel( const CTriangle* pPreFace, const int& idxPre, const int& idx )
-{
-}*/
 
 float CIPDMesh::getDihedralAngel( const CFrontEdge& frontEdge, const int& idx )
 {
