@@ -1361,6 +1361,7 @@ void CIPDMesh::start(){
 
 	FrontEdgeIterator itEdge;
 	int vertIdx;
+	int faceN = 0;
 	while (true){
 		while (m_front.getActiveEdge(itEdge))
 		{
@@ -1369,6 +1370,7 @@ void CIPDMesh::start(){
 			bool bFrontPoint = false;
 			bool pivoted = getCandidatePoint(itEdge, vertIdx, bFrontPoint, 8);
 			if (pivoted){
+				faceN++;
 				CTriangle* newTri = new CTriangle;
 				m_front.join(*itEdge, vertIdx, m_bPointUsed, newTri);
 				newTri->calcNorm(m_ps);
@@ -1380,7 +1382,8 @@ void CIPDMesh::start(){
 				//itEdge->setBoundary();
 				m_front.setBoundary(*itEdge);
 			}
-			pView->draw();
+			if (faceN %500 == 0)
+				pView->draw();
 	//		Sleep(200);
 		}
 
@@ -1388,6 +1391,7 @@ void CIPDMesh::start(){
 		if (findSeedTriangle2(pFace)){
 			pFace->calcNorm(m_ps);
 			m_faceVects.push_back(pFace);
+			faceN++;
 
 			CFrontEdge a(pFace->getA(), pFace->getB(), pFace->getC(), pFace),
 								  b(pFace->getB(), pFace->getC(), pFace->getA(), pFace),

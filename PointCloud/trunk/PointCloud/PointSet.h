@@ -23,6 +23,8 @@ using namespace std;
 #define COS120 1.5f
 #define COS150 1.8660254037844386f
 #define COS160 1.93969262078590838f
+#define COS170 1.98480775301220806F
+#define COS180 2.0F
 
 #define Edge(ptA, ptB) { ptB[0] - ptA[0], ptB[1] - ptA[1], ptB[2] - ptA[2] }
 

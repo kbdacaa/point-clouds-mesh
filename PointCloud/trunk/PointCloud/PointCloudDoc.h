@@ -6,6 +6,38 @@
 #include "ballmesh/BallDialog.h"
 #pragma once
 
+struct ParamSet{
+	// 点云简化邻域点个数
+	unsigned int simplyK;
+	// 单元网格中点的最大个数
+	unsigned int simplyMaxPointSize;
+	// 要精简的八叉树网格的最小深度
+	unsigned int simplyMinDeep;
+
+	// 球相交法的误差精度
+	float ballTerr;
+	// 球相交法的球半径影响域比值
+	float ballTq;
+
+	// 顶点扩展网格生成时搜索邻域大小
+	unsigned int pointMeshK;
+	// 顶点扩展网格生成时三角形最小内角所在比重
+	float pointMeshA;
+	// 顶点扩展网格生成时二面角所占比重(面平滑度)
+	float pointMeshB;
+
+	void initParam(){
+		simplyK = 10;
+		simplyMaxPointSize = 15;
+		simplyMinDeep = 4;
+		ballTerr = 4.0e-6F;
+		ballTq = 2.0F;
+		pointMeshK = 12;
+		pointMeshA = 1.0F;
+		pointMeshB = 1.0F;
+	}
+};
+
 enum MODE{
 	NONE,
 	POINTMODE,
@@ -30,6 +62,11 @@ protected: // 仅从序列化创建
 
 // 属性
 public:
+	BOOL m_bCmpNormal;
+	BOOL m_bAjstNormal;
+	bool m_bUsedGlobalSetting;
+	ParamSet m_paramSet;
+
 	//==========FOR SHOW============//
 	bool m_bMesh;
 	bool m_bWire;
@@ -87,5 +124,10 @@ public:
 	afx_msg void OnShowPoint();
 	afx_msg void OnShowWire();
 	afx_msg void OnPointmesh2();
+	afx_msg void OnComputeNormal();
+	afx_msg void OnAdjustNormal();
+	afx_msg void OnUpdateComputeNormal(CCmdUI *pCmdUI);
+	afx_msg void OnUpdateAdjustNormal(CCmdUI *pCmdUI);
+	afx_msg void OnParamSetting();
 };
 #endif

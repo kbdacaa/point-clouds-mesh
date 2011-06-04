@@ -258,15 +258,11 @@ public:
 			for(j=0; j<degT; j++){
 				int *f = face[lT[j]];
 				int v;
-				if(f[0]==i)
-					v = f[1];
-				else if(f[1]==i)
-					v = f[2];
-				else
-					v = f[0];
+				if(f[0]==i)			v = f[1];
+				else if(f[1]==i)	v = f[2];
+				else						v = f[0];
 				for(k=0; k<degT; k++){
-					if(j==k)
-						continue;
+					if(j==k)			continue;
 					int * f1 = face[lT[k]];
 					if(f1[0]==v || f1[1]==v || f1[2]==v)
 						break;
@@ -281,15 +277,11 @@ public:
 			for(j=0; j<degT; j++){
 				int *f = face[lT[j]];
 				int v;
-				if(f[0]==i)
-					v = f[2];
-				else if(f[1]==i)
-					v = f[0];
-				else
-					v = f[1];
+				if(f[0]==i)			v = f[2];
+				else if(f[1]==i)	v = f[0];
+				else						v = f[1];
 				for(k=0; k<degT; k++){
-					if(j==k)
-						continue;
+					if(j==k)			continue;
 					int * f1 = face[lT[k]];
 					if(f1[0]==v || f1[1]==v || f1[2]==v)
 						break;
@@ -320,8 +312,7 @@ public:
 		int (*stackF)[3] = new int[T+1][3];
 		TriList2* tri_list = NULL;
 		for(i=0; i<vertexN; i++){
-			if(visit[i] == true)
-				continue;
+			if(visit[i] == true)		continue;
 
 			top = 0;
 			stack[0] = i;
@@ -354,8 +345,7 @@ public:
 					break;
 				}
 
-				if(visit[next])
-					break;
+				if(visit[next])		break;
 
 				stack[++top] = next;
 				visit[next] = true;
@@ -511,41 +501,38 @@ public:
 	  int edgeN = 0;
 	  for(i=0; i<vertexN; i++){
 		  int* vt = link[i];
-		  int vtN = degree[i];
+		  int vtN = degree[i];	// 连接三角形个数
 
-		  int* v = new int[vtN*2];
-		  int vN = 0;
+		  int* vtlinkV = new int[vtN*2]; // 连接边
+		  int vtlinkVN = 0;	//连接边个数(顶点的边度)
 
 		  for(j=0; j<vtN; j++){
-			  int* t = face[vt[j]];
+			  int* tri = face[vt[j]];
 			  int v1, v2;//+i、v1、v2为面的三个顶点序号+
-			  if(t[0] == i){
-				  v1 = t[1];
-				  v2 = t[2];
+			  if(tri[0] == i){
+				  v1 = tri[1];
+				  v2 = tri[2];
 			  }
-			  else if(t[1] == i){
-				  v1 = t[2];
-				  v2 = t[0];
+			  else if(tri[1] == i){
+				  v1 = tri[2];
+				  v2 = tri[0];
 			  }
 			  else{
-				  v1 = t[0];
-				  v2 = t[1];
+				  v1 = tri[0];
+				  v2 = tri[1];
 			  }
 
-			  for(k=0; k<vN; k++)
-				  if(v[k] == v1)
-					  break;
-				  if(k == vN)
-					  v[vN++] = v1;
+			  for(k=0; k<vtlinkVN; k++)
+				  if(vtlinkV[k] == v1)	  break;
+			  if(k == vtlinkVN)	vtlinkV[vtlinkVN++] = v1;	// 没有出现此点
 
-				  for(k=0; k<vN; k++)
-					  if(v[k] == v2)
-						  break;
-					  if(k == vN)
-						  v[vN++] = v2;
+			  for(k=0; k<vtlinkVN; k++)
+				  if(vtlinkV[k] == v2)	  break;
+			  if(k == vtlinkVN)
+				  vtlinkV[vtlinkVN++] = v2;
 		  }
-		  edgeN += vN;
-		  delete[] v;
+		  edgeN += vtlinkVN;
+		  delete[] vtlinkV;
 		  if(vtN != 0)
 			  delete[] link[i];
 	  }
@@ -557,97 +544,87 @@ public:
 
   int countHoles(){
 	  int i, j, k;
-	  int *degree = new int[vertexN];
+	  int *degreeTris = new int[vertexN];
 	  for(i=0; i<vertexN; i++)
-		  degree[i] = 0;
+		  degreeTris[i] = 0;
 
 	  for(i=0; i<faceN; i++){
 		  int* f = face[i];
-		  degree[f[0]]++;
-		  degree[f[1]]++;
-		  degree[f[2]]++;
+		  degreeTris[f[0]]++;
+		  degreeTris[f[1]]++;
+		  degreeTris[f[2]]++;
 	  }
 
-	  int** link = new int*[vertexN];
+	  int** linkTris = new int*[vertexN];
 	  for(i=0; i<vertexN; i++){
-		  link[i] = new int[degree[i]];
-		  degree[i] = 0;
+		  linkTris[i] = new int[degreeTris[i]];
+		  degreeTris[i] = 0;
 	  }
 
 	  for(i=0; i<faceN; i++){
 		  int* f = face[i];
 		  for(j=0; j<3; j++){
-			  k = f[j];
-			  link[k][degree[k]++] = i;
+			  k = f[j];	// 顶点编号
+			  linkTris[k][degreeTris[k]++] = i;
 		  }
 	  }
 
 	  for(i=0; i<vertexN; i++){
-		  int degT = degree[i];
-		  int degE = 0;
-		  int* lT = link[i];
-		  int* lE = new int[2*degT];
-		  for(j=0; j<degT; j++){
-			  int *f = face[lT[j]];
+		  int degTri = degreeTris[i];	// 顶点i连接的三角形个数
+		  int degEdge = 0;
+		  int* linkTri = linkTris[i];
+		  int* linkEdge = new int[2*degTri];
+		  for(j=0; j<degTri; j++){
+			  int *f = face[linkTri[j]];
 			  int v;
-			  if(f[0]==i)
-				  v = f[1];
-			  else if(f[1]==i)
-				  v = f[2];
-			  else
-				  v = f[0];
-			  for(k=0; k<degT; k++){
-				  if(j==k)
-					  continue;
-				  int * f1 = face[lT[k]];
+			  if(f[0]==i)				  v = f[1];
+			  else if(f[1]==i)		  v = f[2];
+			  else						  v = f[0];
+
+			  for(k=0; k<degTri; k++){
+				  if(j==k)  continue;
+
+				  int * f1 = face[linkTri[k]];
 				  if(f1[0]==v || f1[1]==v || f1[2]==v)
 					  break;
 			  }
-			  if(k==degT)
-				  lE[degE++] = v;
+			  if(k==degTri)
+				  linkEdge[degEdge++] = v;
 		  }
 
-		  for(j=0; j<degT; j++){
-			  int *f = face[lT[j]];
+		  for(j=0; j<degTri; j++){
+			  int *f = face[linkTri[j]];
 			  int v;
-			  if(f[0]==i)
-				  v = f[2];
-			  else if(f[1]==i)
-				  v = f[0];
-			  else
-				  v = f[1];
-			  for(k=0; k<degT; k++){
-				  if(j==k)
-					  continue;
-				  int * f1 = face[lT[k]];
+			  if(f[0]==i)				  v = f[2];
+			  else if(f[1]==i)		  v = f[0];
+			  else						  v = f[1];
+			  for(k=0; k<degTri; k++){
+				  if(j==k)		continue;
+
+				  int * f1 = face[linkTri[k]];
 				  if(f1[0]==v || f1[1]==v || f1[2]==v)
 					  break;
 			  }
-			  if(k==degT)
-				  lE[degE++] = v;
+			  if(k==degTri)
+				  linkEdge[degEdge++] = v;
 		  }
-		  degree[i] = degE;
-		  delete[] lT;
-		  if(degE == 0)
-			  delete[] lE;
-		  else
-			  link[i] = lE;
+		  degreeTris[i] = degEdge;		// 连接的顶点数
+		  delete[] linkTri;
+		  if(degEdge == 0)	  delete[] linkEdge;
+		  else							  linkTris[i] = linkEdge;	// 连接的顶点
 	  }
 
 	  int holeN = 0;
-	  bool* visit = new bool[vertexN];
-	  for(i=0; i<vertexN; i++)
-		  visit[i] = false;
+	  bool* visitPt = new bool[vertexN];
+	  for(i=0; i<vertexN; i++)  visitPt[i] = false;
+
 	  int top;
 	  int *stack = new int[vertexN];
 	  for(i=0; i<vertexN; i++){
-		  if(visit[i] == true)
-			  continue;
+		  if(visitPt[i] == true)  continue;
 
-		  visit[i] = true;
-
-		  if(degree[i] == 0)
-			  continue;
+		  visitPt[i] = true;
+		  if(degreeTris[i] == 0)	  continue;
 
 		  holeN++;
 
@@ -658,36 +635,36 @@ public:
 		  while(true){
 			  int index = stack[top];
 
-			  if(degree[index] < 2){
-				  if(degree[index] != 0){
-					  delete[] link[index];
-					  degree[index] = 0;
+			  if(degreeTris[index] < 2){
+				  if(degreeTris[index] != 0){
+					  delete[] linkTris[index];
+					  degreeTris[index] = 0;
 				  }
 				  break;
 			  }
 
-			  int next = link[index][0];
+			  int next = linkTris[index][0];// index顶点连接的第一个顶点next
 
-			  delete[] link[index];
-			  degree[index] = 0;
+			  delete[] linkTris[index];
+			  degreeTris[index] = 0;
 
 			  if(next == i){
 				  isFilled = true;
 				  break;
 			  }
 
-			  if(visit[next])
+			  if(visitPt[next])
 				  break;
 
 			  stack[++top] = next;
-			  visit[next] = true;
+			  visitPt[next] = true;
 		  }
 	  }
 
 	  delete[] stack;
-	  delete[] visit;
-	  delete[] link;
-	  delete[] degree;
+	  delete[] visitPt;
+	  delete[] linkTris;
+	  delete[] degreeTris;
 
 	  return holeN;
   }
@@ -771,11 +748,6 @@ public:
 			  link[i] = lE;
 	  }
 
-	  //int* visit = new int[vertexN];
-	  //for(i=0; i<vertexN; i++)
-      //visit[i] = -1;
-	  //int top = -1;
-	  //int *stack = new int[T];
 	  TriList2* tri_list = NULL;
 	  for(i=0; i<vertexN; i++){
 		  int deg = degree[i];
@@ -795,15 +767,6 @@ public:
 			  delete[] link[i1];
 		  if(degree[i2] != 0)
 			  delete[] link[i2];
-
-			  /*
-			  visit[i] = i;
-			  stack[++top] = i;
-			  while(top < T){
-			  int current = stack[top--];
-			  int* l = link[current];
-			  int deg1 = degree[current];
-      }*/
 	  }
 	  delete[] link;
 	  delete[] degree;
@@ -833,105 +796,100 @@ public:
 
   void fillSmallHolesMinA(int T){
 	  int i, j, k;
-	  int *degree = new int[vertexN];
-	  for(i=0; i<vertexN; i++)
-		  degree[i] = 0;
+
+	  int *degreeTri = new int[vertexN];	// 每个顶点连接的三角形个数
+	  for(i=0; i<vertexN; i++)  degreeTri[i] = 0;
 
 	  for(i=0; i<faceN; i++){
 		  int* f = face[i];
-		  degree[f[0]]++;
-		  degree[f[1]]++;
-		  degree[f[2]]++;
+		  degreeTri[f[0]]++;
+		  degreeTri[f[1]]++;
+		  degreeTri[f[2]]++;
 	  }
 
-	  int** link = new int*[vertexN];
+	  int** linkTriangle = new int*[vertexN];	// 每个顶点连接的三角形编号
 	  for(i=0; i<vertexN; i++){
-		  link[i] = new int[degree[i]];
-		  degree[i] = 0;
+		  linkTriangle[i] = new int[ degreeTri[i] ];
+		  degreeTri[i] = 0;
 	  }
 
 	  for(i=0; i<faceN; i++){
 		  int* f = face[i];
 		  for(j=0; j<3; j++){
-			  k = f[j];
-			  link[k][degree[k]++] = i;
+			  k = f[j];	// k 为顶点编号
+			  linkTriangle[k][ degreeTri[k]++ ] = i;
 		  }
 	  }
 
-	  int** linkT = new int*[vertexN];
+	  int** linkHoleTri = new int*[vertexN];	// 孔洞边所在的三角形链表
 	  for(i=0; i<vertexN; i++){
-		  int degT = degree[i];
+		  int degTri = degreeTri[i];	// 顶点连接的三角形个数
 		  int degE = 0;
-		  int* lT = link[i];
-		  int* lE = new int[2*degT];
-		  int* lF = new int[2*degT];
-		  for(j=0; j<degT; j++){
-			  int *f = face[lT[j]];
+		  int* linkTri = linkTriangle[i];// 顶点连接的三角形编号
+		  int* holeVertex = new int[2*degTri];
+		  int* holeTri = new int[2*degTri];
+		  for(j=0; j<degTri; j++){
+			  int *f = face[ linkTri[j] ];	// 一个三角形面
 			  int v;
-			  if(f[0]==i)
-				  v = f[1];
-			  else if(f[1]==i)
-				  v = f[2];
-			  else
-				  v = f[0];
-			  for(k=0; k<degT; k++){
-				  if(j==k)
-					  continue;
-				  int * f1 = face[lT[k]];
+			  if(f[0]==i)				  v = f[1];
+			  else if(f[1]==i)		  v = f[2];
+			  else						  v = f[0];
+
+			  for(k=0; k<degTri; k++){
+				  if(j==k)				  continue;
+
+				  int * f1 = face[ linkTri[k] ];
 				  if(f1[0]==v || f1[1]==v || f1[2]==v)
 					  break;
 			  }
-			  if(k==degT){
-				  lE[degE] = v;
-				  lF[degE] = lT[j];
+			  if(k==degTri){
+				  holeVertex[degE] = v;// 存放只出现一次的顶点(边界点)
+				  holeTri[degE] = linkTri[j];//存放与v相关的三角形
 				  degE++;
 			  }
 		  }
 
-		  for(j=0; j<degT; j++){
-			  int *f = face[lT[j]];
+		  for(j=0; j<degTri; j++){
+			  int *f = face[linkTri[j]];
 			  int v;
-			  if(f[0]==i)
-				  v = f[2];
-			  else if(f[1]==i)
-				  v = f[0];
-			  else
-				  v = f[1];
-			  for(k=0; k<degT; k++){
-				  if(j==k)
-					  continue;
-				  int * f1 = face[lT[k]];
+			  if(f[0]==i)				  v = f[2];
+			  else if(f[1]==i)		  v = f[0];
+			  else						  v = f[1];
+
+			  for(k=0; k<degTri; k++){
+				  if(j==k)				  continue;
+
+				  int * f1 = face[linkTri[k]];
 				  if(f1[0]==v || f1[1]==v || f1[2]==v)
 					  break;
 			  }
-			  if(k==degT){
-				  lE[degE] = v;
-				  lF[degE] = lT[j];
+			  if(k==degTri){
+				  holeVertex[degE] = v;
+				  holeTri[degE] = linkTri[j];
 				  degE++;
 			  }
 		  }
-		  degree[i] = degE;
-		  delete[] lT;
+		  degreeTri[i] = degE;	// 顶点的孔洞边数
+		  delete[] linkTri;
 		  if(degE == 0){
-			  delete[] lE;
-			  delete[] lF;
+			  delete[] holeVertex;
+			  delete[] holeTri;
 		  }
 		  else{
-			  link[i] = lE;
-			  linkT[i] = lF;
+			  linkTriangle[i] = holeVertex;	// 与定点i相连的边界点列表
+			  linkHoleTri[i] = holeTri;	// 与定点i相连的边界点所在三角形列表
 		  }
 	  }
 
 	  bool* visit = new bool[vertexN];
-	  for(i=0; i<vertexN; i++)
-		  visit[i] = false;
+	  for(i=0; i<vertexN; i++)  visit[i] = false;
+
 	  int top;
-	  int *stack = new int[T+1];
-	  int *stackF = new int[T+1];
+	  int *stack = new int[T+1];	// 孔洞点列表
+	  int *stackF = new int[T+1];//孔洞点所在三角形列表
 	  TriList2* tri_list = new TriList2(-1, -1, -1);
 	  for(i=0; i<vertexN; i++){
-		  if(visit[i] == true)
-			  continue;
+		  if(visit[i] == true)	  continue;
 
 		  top = 0;
 		  stack[0] = i;
@@ -941,36 +899,34 @@ public:
 		  while(top < T){
 			  int index = stack[top];
 
-			  if(degree[index] < 2){
-				  if(degree[index] != 0){
-					  delete[] link[index];
-					  degree[index] = 0;
+			  if(degreeTri[index] < 2){// 与顶点index相连的孔洞点个数(至少为2)
+				  if(degreeTri[index] != 0){
+					  delete[] linkTriangle[index];
+					  degreeTri[index] = 0;
 				  }
 				  break;
 			  }
 
-			  int next = link[index][0];
-			  int f = linkT[index][0];
+			  int next = linkTriangle[index][0];// 与顶点index相连的第一个孔洞点
+			  int f = linkHoleTri[index][0];
 			  stackF[top] = f;
 
-			  delete[] link[index];
-			  delete[] linkT[index];
-			  degree[index] = 0;
+			  delete[] linkTriangle[index];
+			  delete[] linkHoleTri[index];
+			  degreeTri[index] = 0;
 
-			  if(next == i){
+			  if(next == i){	// 孔洞头尾相交
 				  isFilled = true;
 				  break;
 			  }
 
-			  if(visit[next])
-				  break;
+			  if(visit[next])  break;	// 一个顶点只能位于至多一个孔洞中
 
 			  stack[++top] = next;
 			  visit[next] = true;
 		  }
 
-		  if(!isFilled)
-			  continue;
+		  if(!isFilled)  continue;
 		  int size = top+1;
 
 		  fillPolygon(tri_list, stack, stackF, size);
@@ -978,9 +934,9 @@ public:
 	  delete[] stack;
 	  delete[] stackF;
 	  delete[] visit;
-	  delete[] link;
-	  delete[] linkT;
-	  delete[] degree;
+	  delete[] linkTriangle;
+	  delete[] linkHoleTri;
+	  delete[] degreeTri;
 
 	  int N = 0;
 	  TriList2* l;
@@ -1058,8 +1014,7 @@ public:
   }
 
   //1 - Cos(dihedral angle) 计算面(i1,j1,k1)和面(i2,j2,k2)的法矢的夹角的余弦
-  inline float dihedral(int i1, int j1, int k1,
-	  int i2, int j2, int k2){
+  inline float dihedral(int i1, int j1, int k1,	  int i2, int j2, int k2){
 	  float n1[3], n2[3];
 	  normal(n1, i1, j1, k1);
 	  normal(n2, i2, j2, k2);
@@ -1085,14 +1040,10 @@ public:
 
 	  for(i=0; i<N-2; i++){
 		  area[i][i+2] = areaF(v[i], v[i+1], v[i+2]);
-		  float a1 = dihedral(v[i], v[i+1], v[i+2],
-			  face[f[i]][0], face[f[i]][2], face[f[i]][1]);
-		  float a2 = dihedral(v[i], v[i+1], v[i+2],
-			  face[f[i+1]][0], face[f[i+1]][2], face[f[i+1]][1]);
-		  if(a1 > a2)
-			  angle[i][i+2] = a1;
-		  else
-			  angle[i][i+2] = a2;
+		  float a1 = dihedral(v[i], v[i+1], v[i+2],  face[f[i]][0], face[f[i]][2], face[f[i]][1]);
+		  float a2 = dihedral(v[i], v[i+1], v[i+2],  face[f[i+1]][0], face[f[i+1]][2], face[f[i+1]][1]);
+		  if(a1 > a2)	  angle[i][i+2] = a1;
+		  else				  angle[i][i+2] = a2;
 		  opt[i][i+2] = i+1;
 	  }
 
@@ -1105,15 +1056,13 @@ public:
 				  float a = area[i][m] + area[m][k] + areaF(v[i], v[m], v[k]);
 				  float a1, a2;
 				  if(i+1 == m)
-					  a1 = dihedral(v[i], v[m], v[k],
-					  face[f[i]][0], face[f[i]][2], face[f[i]][1]);
+					  a1 = dihedral(v[i], v[m], v[k],  face[f[i]][0], face[f[i]][2], face[f[i]][1]);
 				  else
-					  a1 = dihedral(v[i], v[m], v[k], v[i], v[opt[i][m]], v[m]);
+					  a1 = dihedral(v[i], v[m], v[k],  v[i], v[opt[i][m]], v[m]);
 				  if(m+1 == k)
-					  a2 = dihedral(v[i], v[m], v[k],
-					  face[f[m]][0], face[f[m]][2], face[f[m]][1]);
+					  a2 = dihedral(v[i], v[m], v[k],  face[f[m]][0], face[f[m]][2], face[f[m]][1]);
 				  else
-					  a2 = dihedral(v[i], v[m], v[k], v[m], v[opt[m][k]], v[k]);
+					  a2 = dihedral(v[i], v[m], v[k],  v[m], v[opt[m][k]], v[k]);
 				  float maxA = a1;
 				  if(maxA < a2) maxA = a2;
 				  if(maxA < angle[i][m]) maxA = angle[i][m];

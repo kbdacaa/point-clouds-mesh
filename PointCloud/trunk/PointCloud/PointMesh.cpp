@@ -24,19 +24,18 @@ bool CPointMesh::externPoint( size_t iSeed )
 			maxExistLinkLength = length;
 	}
 	//====== 搜索邻域范围内的点集 =======//
-#define MAX_SEARTCH_POINT_NUM  9
-	ANNidxArray nnIdx = new ANNidx[MAX_SEARTCH_POINT_NUM+1+linkPtF.size()];	//多加1是为了后续形成三角形时不用回环
-	int searchPointNum = MAX_SEARTCH_POINT_NUM;
+	ANNidxArray nnIdx = new ANNidx[m_searchPointNum+1+linkPtF.size()];	//多加1是为了后续形成三角形时不用回环
+	int searchPointNum = m_searchPointNum;
 	if (maxExistLinkLength == 0){	// 当前点为未使用点，没有连接点
-		ANNdistArray dist = new ANNdist[MAX_SEARTCH_POINT_NUM];
-		m_ps->KdTree()->annkSearch(ptSeed, MAX_SEARTCH_POINT_NUM, nnIdx, dist);
+		ANNdistArray dist = new ANNdist[m_searchPointNum];
+		m_ps->KdTree()->annkSearch(ptSeed, m_searchPointNum, nnIdx, dist);
 		delete[] dist;
 	} else {	// 已经包含连接点
 #define LIMITED_POINT_NUM 6//! 要保证searchPointNum至少大于6
 		float r2 = maxExistLinkLength*maxExistLinkLength;
 		do {//! 此处可能出现问题：搜索到的点太少而不能包含原来已经在Link中的点
-			int size = m_ps->KdTree()->annkFRSearch(ptSeed, r2, MAX_SEARTCH_POINT_NUM, nnIdx);
-			searchPointNum = min(size, MAX_SEARTCH_POINT_NUM);
+			int size = m_ps->KdTree()->annkFRSearch(ptSeed, r2, m_searchPointNum, nnIdx);
+			searchPointNum = min(size, m_searchPointNum);
 			r2 *= 1.3f;
 		} while (searchPointNum < LIMITED_POINT_NUM);
 		//TODO需要将两者和并起来
@@ -249,7 +248,13 @@ void CPointMesh::start()
 {
 	if (m_ps->m_normal == NULL) {
 		m_ps->computeNormal(10);
+		m_ps->adjustNormal(10);
 	}
+	m_ps->constructKdTree();
+	m_links.clear();
+	m_faces.clear();
+	m_fontPoints.clear();
+
 	m_links.resize(m_ps->getPointSize());
 
 	size_t seed = getSeed(0);
@@ -293,14 +298,16 @@ void CPointMesh::startT()
 	if (m_ps->m_normal == NULL) {
 		m_ps->computeNormal(10);
 		m_ps->adjustNormal(10);
-	}
+	}else
+		m_ps->constructKdTree();
+
 	m_links.clear();
 	m_faces.clear();
 	m_fontPoints.clear();
 	m_links.resize(m_ps->getPointSize());
 
 	//size_t seed = getSeed(0);
-	size_t seed = rand()%m_ps->getPointSize();
+	size_t seed = 0;//rand()%m_ps->getPointSize();
 	externSeedPoint(seed);
 	size_t handand = 0;
 	while (m_fontPoints.size() != 0) {
@@ -309,7 +316,7 @@ void CPointMesh::startT()
 		externFrontPoint(seed);
 		handand ++;
 
-	if (handand % 100 == 0)
+	if (handand % 200 == 0)
 		m_pView->draw();
 	}
 	//m_links.clear();
@@ -317,8 +324,8 @@ void CPointMesh::startT()
 }
 
 //=======采用贪心算法不断查找下一个顶点来和当前边形成三角形======//
-void CPointMesh::externSeedPoint(size_t iSeed){
-	//====== 搜索邻域范围内的点集 =======//
+void CPointMesh::externSeedPoint(size_t iSeed)
+{
 	float* ptSeed = m_ps->m_point[iSeed];
 	ANNidxArray nnidx = new ANNidx[m_searchPointNum+1];//多加1是为了后续形成三角形时不用回环
 	ANNdistArray dist = new ANNdist[m_searchPointNum];
@@ -327,10 +334,9 @@ void CPointMesh::externSeedPoint(size_t iSeed){
 	//=======去除已经为删除点的顶点=======//
 	int searchPointNum = 1;
 	ANNidxArray nnIdx = new ANNidx[m_searchPointNum+1];
-	for (int m = 1; m < m_searchPointNum; m++){
-		if (m_links[ nnidx[m] ].getStatus() != PS_DELETE){
-			nnIdx[m] = nnidx[m];
-			searchPointNum++;
+	for (int i = 1; i < m_searchPointNum; i++){
+		if (m_links[ nnidx[i] ].getStatus() != PS_DELETE){
+			nnIdx[searchPointNum++] = nnidx[i];
 		}
 	}
 	delete nnidx;
@@ -370,18 +376,61 @@ void CPointMesh::externSeedPoint(size_t iSeed){
 	for (int j = 1; j < searchPointNum; j++) {
 		arccosa[j] = arcNorm(ptSeed, projectPt[start], ptNorm, projectPt[j]);
 	}
-	delete[] projectPt;
 	arccosa[start] = 0.0f;
 	//===== 对各点按照逆时针方向排序 =====//
-	sortArc(arccosa, nnidx, searchPointNum);
+//	sortArc(arccosa, nnidx, searchPointNum);
+	sortArc(arccosa, nnidx, projectPt, searchPointNum);
 	delete[] arccosa;
+
+	//==== 标记link中的元素的所在位置(标记为true) ====//
+	bool * bLinkedCenter = new bool[searchPointNum+1];	// 也用来标记连接了哪些点
+	bLinkedCenter[searchPointNum] = true;	// 最后一个元素与第一个元素相同
+	for (int k = 0; k < searchPointNum ; k++) {
+		bLinkedCenter[k] = false;
+	}
+
 	//========= 形成三角形 ==========//
 	nnidx[searchPointNum] = nnidx[1];
-	externSeedTriangles(iSeed, nnidx, searchPointNum);
+	externSeedTriangles(iSeed, nnidx, bLinkedCenter, searchPointNum);
+//	CleanInPoint(iSeed, nnidx, projectPt, bLinkedCenter, searchPointNum);
 	delete[] nnidx;
+	delete[] bLinkedCenter;
+
+	delete[] projectPt;
 
 	if (getPointStatus(iSeed) != PS_BOUNDARY)
 		setPointStatus(iSeed, PS_INPOINT);
+}
+//=======计算连接点形成的多边形，将位于内部的顶点删除=====//
+void CPointMesh::CleanInPoint(size_t iSeed,ANNidx* nnidx, float (*projPt)[3], bool* bLinked, int N){
+	int i = 1;
+	while (i < N && bLinked[i]) i++;
+	int j = i+1;
+
+	while ( j < N+1){
+		while (j < N && bLinked[j]) j++;
+		if (j > i+1) {
+			float* prjPti = projPt[i];
+			float* prjPtj = projPt[j];
+			float* ptSeed = m_ps->m_point[iSeed];
+			float eij[3] = Edge(prjPti, prjPtj);
+			float eiSeed[3] = Edge(prjPti, ptSeed);
+			float eTriNor[3];
+			eCross(eTriNor, eij, eiSeed);
+
+			for (int k = i+1; k < j; k++){
+				float eiPrj[3] = Edge(prjPti, projPt[k] );
+				float eNorm[3];
+				eCross(eNorm, eij, eiPrj);
+				if (eCosNoSqrt(eTriNor, eNorm) > 0){
+					size_t index = nnidx[k];
+					setPointStatus(index, PS_DELETE);
+				}
+			}
+		}
+		i = j;
+		j++;
+	}
 }
 
 //************************************
@@ -390,7 +439,7 @@ void CPointMesh::externSeedPoint(size_t iSeed){
 // Parameter: ANNidx * nnIdx 中心点邻域
 // Parameter: int N 邻域点个数
 //************************************
-void CPointMesh::externSeedTriangles(size_t iSeed, ANNidx* nnIdx, int N){
+void CPointMesh::externSeedTriangles(size_t iSeed, ANNidx* nnIdx, bool* bLinkedCenter, int N){
 	int bestIdx = 0;
 	int ii = 1;
 	while (ii <N+1){
@@ -418,17 +467,10 @@ void CPointMesh::externSeedTriangles(size_t iSeed, ANNidx* nnIdx, int N){
 			m_fontPoints.push_back(nnIdx[bestIdx]);
 		}
 
-		//==== 标记link中的元素的所在位置(标记为true) ====//
-		bool * bLinkedCenter = new bool[N+1];	// 也用来标记连接了哪些点
-		bLinkedCenter[N] = true;	// 最后一个元素与第一个元素相同
-		for (int k = 0; k < N ; k++) {
-			bLinkedCenter[k] = false;
-		}
 		bLinkedCenter[ii] = true;
 		bLinkedCenter[bestIdx] = true;
 
 		triBtwSE(iSeed, nnIdx[ii], nnIdx, bestIdx, N, bLinkedCenter);
-		delete[] bLinkedCenter;
 	}
 }
 
@@ -498,8 +540,7 @@ void CPointMesh::externFrontPoint(size_t iSeed){
 	ANNidxArray nnidx = new ANNidx[searchPointNum+1];
 	for (int m = 1; m < searchPointNum; m++){
 		if (m_links[ nnIdx[m] ].getStatus() != PS_DELETE){
-			nnidx[m] = nnIdx[m];
-			pointNum++;
+			nnidx[pointNum++] = nnIdx[m];
 		}
 	}
 	delete nnIdx;
@@ -514,43 +555,49 @@ void CPointMesh::externFrontPoint(size_t iSeed){
 			if (nnIdx[i] == firstIndex) { startPtIndex = i;	 break;	}
 		}
 	}
+
 	//===== 形成以扩展点为中心的平面 =====//
 	float* ptNorm = m_ps->m_normal[iSeed];
 	CPlane planeAtPt(ptNorm, ptSeed);
 	//===== 将搜索到的点投影在平面上 =====//
 	float (*projectPt)[3] = new float[searchPointNum][3];// 投影点
-	for (int i = 1; i < searchPointNum; i++) {
-		planeAtPt.projectPoint( projectPt[i], m_ps->m_point[ nnIdx[i] ] );
+	int m;
+	for (m = 1; m < searchPointNum; m++) {
+		planeAtPt.projectPoint( projectPt[m], m_ps->m_point[ nnIdx[m] ] );
 	}
 	//= 计算各点相对于起始边的夹角(逆时针方向) =//
 	float* arccosa = new float[searchPointNum];	// 角度数组
 	for (int j = 1; j < searchPointNum; j++) {
 		arccosa[j] = arcNorm(ptSeed, projectPt[startPtIndex], ptNorm, projectPt[j]);
 	}
-	delete[] projectPt;
 	arccosa[startPtIndex] = 0.0f;
 	//===== 对各点按照逆时针方向排序 =====//
-	sortArc(arccosa, nnIdx, searchPointNum);
+//	sortArc(arccosa, nnIdx, searchPointNum);
+	sortArc(arccosa, nnIdx, projectPt, searchPointNum);
 	delete[] arccosa;
 	//==== 对已连接点按照逆时针方向排序 ===//
 	sortWith(ptSeedFront.getLink(), nnIdx, searchPointNum);
+
+	//==== 标记link中的元素的所在位置(标记为true) ====//
+	bool * bLinkedCenter = new bool[searchPointNum+1];	// 也用来标记连接了哪些点
+	bLinkedCenter[searchPointNum] = true;	// 最后一个元素与第一个元素相同
+	for (int k = 0; k < searchPointNum ; k++) {
+		bLinkedCenter[k] = false;
+	}
+
 	//========= 形成三角形 ==========//
 	nnIdx[searchPointNum] = nnIdx[1];
-	externFrontTriangles(iSeed, nnIdx, searchPointNum);
+	externFrontTriangles(iSeed, nnIdx, bLinkedCenter, searchPointNum);
+//	CleanInPoint(iSeed, nnIdx, projectPt, bLinkedCenter, searchPointNum);
 	delete[] nnIdx;
+	delete[] projectPt;
+	delete[] bLinkedCenter;
 
 	if (getPointStatus(iSeed) != PS_BOUNDARY)
 		setPointStatus(iSeed, PS_INPOINT);
 }
 
-void CPointMesh::externFrontTriangles(size_t iSeed, ANNidx* nnIdx, int N){
-	//==== 标记link中的元素的所在位置(标记为true) ====//
-	bool * bLinkedCenter = new bool[N+1];	// 也用来标记连接了哪些点
-	bLinkedCenter[N] = true;	// 最后一个元素与第一个元素相同
-	for (int k = 0; k < N ; k++) {
-		bLinkedCenter[k] = false;
-	}
-
+void CPointMesh::externFrontTriangles(size_t iSeed, ANNidx* nnIdx, bool* bLinkedCenter, int N){
 	//=== 设置linkList是否在nnIdx中 ===//
 	LinkList& linkList = m_links[iSeed].getLink();
 	LSIt it = linkList.begin();
@@ -588,9 +635,6 @@ void CPointMesh::externFrontTriangles(size_t iSeed, ANNidx* nnIdx, int N){
 		}
 		i = j;		j++;
 	}
-	//=======计算连接点形成的多边形，将位于内部的顶点删除=====//
-
-	delete[] bLinkedCenter;
 }
 
 //===============================================//
@@ -677,13 +721,16 @@ float CPointMesh::computeSeedPointFit(float ptSeed[3], float ptCur[3], size_t iN
 	float angelNext = 1.0f - eCos(eSeedCur, eCurNext);
 	float minTriAngel = min(angelSeed, angelCur);	// 新三角形的最小内角
 	minTriAngel = min(minTriAngel, angelNext);//【0，0.5】
-	if (minTriAngel < COS25)	return FLT_MINN+20;
+	if (minTriAngel < COS15)	return FLT_MINN+20;
 	float eNorm[3];		// 新三角形面的法矢
 	eCross(eNorm, eSeedCur, eSeedNext);
 //	eUnit(eNorm);
 
 	float angleDihe = eCos(eNorm, preNorm);	// 二面角大小【-1,1】
-	return 2*m_A*minTriAngel + m_B* angleDihe;
+	float ret =  2*m_A*minTriAngel + m_B* angleDihe;
+	if (getPointStatus(iNext)== PS_FRONTPOINT)
+		ret *= 1.4F;
+	return ret;
 }
 
 float CPointMesh::computeSeedPointFit(float ptSeed[3], float ptCur[3], size_t iNext){

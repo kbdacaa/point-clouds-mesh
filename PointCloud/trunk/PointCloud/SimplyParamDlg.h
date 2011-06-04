@@ -1,6 +1,5 @@
 #pragma once
 
-
 // CSimplyParamDlg 对话框
 
 class CSimplyParamDlg : public CDialog
@@ -20,6 +19,8 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 public:
-	int m_K;	//+K 邻域点个数+
+	unsigned int m_K;	//+K 邻域点个数+
 
+	unsigned int m_M;	// 单元网格中顶点的最大个数
+	unsigned int m_Deep;// 精简时最小的网格深度
 };

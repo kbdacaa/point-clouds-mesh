@@ -126,6 +126,12 @@
     <ClCompile Include="MainFrm.cpp">
       <Filter>源文件\PointCloud</Filter>
     </ClCompile>
+    <ClCompile Include="Dialog\SetK.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Dialog\ParamSettingDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Mesh.h">
@@ -252,6 +258,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Simply\AdjustMesh.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\sort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Dialog\SetK.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Dialog\ParamSettingDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

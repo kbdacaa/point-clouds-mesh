@@ -112,15 +112,20 @@ BEGIN
     END
     POPUP "前处理(&E)"
     BEGIN
+        MENUITEM "计算法矢",                        ID_CMPNORMAL
+        MENUITEM "调整法矢",                        32796
+        MENUITEM SEPARATOR
         MENUITEM "精简(&J)\tCtrl+J",              ID_EDIT_SIMPLY
         MENUITEM "非均匀网格曲率精简",                   ID_OCTSIM
-        MENUITEM SEPARATOR
-        MENUITEM "面法矢逆向(&F)\tCtrl+F",           ID_EDIT_FLIP
         MENUITEM SEPARATOR
         MENUITEM "网格化(&M)\tCtrl+M",             ID_MESH
         MENUITEM "FTPMESH",                     ID_FTPMESH
         MENUITEM "PointMesh",                   ID_POINTMESH
         MENUITEM "点扩展网格化",                      ID_POINTMESH2
+        MENUITEM SEPARATOR
+        MENUITEM "面法矢逆向(&F)\tCtrl+F",           ID_EDIT_FLIP
+        MENUITEM SEPARATOR
+        MENUITEM "参数设置",                        ID_PARAMSETTING
     END
     POPUP "BallMesh"
     BEGIN
@@ -187,16 +192,23 @@ BEGIN
     DEFPUSHBUTTON   "确定",IDOK,178,7,50,16,WS_GROUP
 END
 
-IDD_DLG_SIMPLY DIALOGEX 0, 0, 173, 92
+IDD_DLG_SIMPLY DIALOGEX 0, 0, 299, 99
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "精简参数设置"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "确定",IDOK,24,60,50,14
-    PUSHBUTTON      "取消",IDCANCEL,103,60,50,14
-    GROUPBOX        "相关参数设置",IDC_STATIC,7,7,159,78
-    LTEXT           "邻域点个数K：",IDC_STATIC,25,26,53,8
-    EDITTEXT        IDC_EDIT_K,100,23,58,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "确定",IDOK,79,76,50,14
+    PUSHBUTTON      "取消",IDCANCEL,159,76,50,14
+    GROUPBOX        "相关参数设置",IDC_STATIC,7,7,285,85
+    LTEXT           "邻域点个数K：",IDC_STATIC,19,26,53,8
+    EDITTEXT        IDC_EDIT_K,99,23,58,14,ES_AUTOHSCROLL
+    LTEXT           "单元网格中点最多M：",IDC_STATIC,19,42,78,8
+    EDITTEXT        IDC_EDIT_M,99,39,58,14,ES_AUTOHSCROLL
+    LTEXT           "取10较好,一般为8~20之间",IDC_STATIC,167,26,93,8
+    LTEXT           "值越大,精简率越大;一般取8~20",IDC_STATIC,167,44,112,8
+    LTEXT           "八叉树精简深度D:",IDC_STATIC,19,60,64,8
+    EDITTEXT        IDC_EDIT_DEEP,99,57,58,14,ES_AUTOHSCROLL
+    LTEXT           "值越大,精简率越小;一般取1-7",IDC_STATIC,167,60,105,8
 END
 
 IDD_DLG_BALLMESHSET DIALOGEX 0, 0, 177, 108
@@ -210,6 +222,63 @@ BEGIN
     EDITTEXT        IDC_EDIT2,89,42,59,14,ES_AUTOHSCROLL
     LTEXT           "精度：",IDC_STATIC,34,24,25,8
     LTEXT           "影响域比值：",IDC_STATIC,34,45,49,8
+END
+
+IDD_DLG_SETK DIALOGEX 0, 0, 296, 95
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "设置参数K"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "确定",IDOK,68,74,50,14
+    PUSHBUTTON      "取消",IDCANCEL,179,74,50,14
+    EDITTEXT        IDC_EDIT1,50,15,84,14,ES_AUTOHSCROLL
+    LTEXT           "参数K: ",IDC_STATIC,21,18,26,8
+    LTEXT           "搜索邻域的大小,过大将造成搜索耗时;\n过小则无法完成重建;一般设为8-16",IDC_STATIC,143,14,137,17
+    LTEXT           "参数A:",IDC_STATIC,21,37,24,8
+    LTEXT           "参数B:",IDC_STATIC,21,56,24,8
+    EDITTEXT        IDC_EDIT2,50,34,84,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,50,53,84,14,ES_AUTOHSCROLL
+    LTEXT           "三角形最小内角所占比重",IDC_STATIC,143,38,89,8
+    LTEXT           "二面角所占比重(面平滑度)",IDC_STATIC,143,55,94,8
+END
+
+IDD_DLG_PARAMSETTING DIALOGEX 0, 0, 525, 340
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "参数设置"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "确定",IDOK,205,319,50,14
+    PUSHBUTTON      "取消",IDCANCEL,468,319,50,14
+    GROUPBOX        "点云简化",IDC_STATIC,7,7,511,76
+    GROUPBOX        "网格生成",IDC_STATIC,7,86,511,89
+    GROUPBOX        "网格优化",IDC_STATIC,7,178,511,94
+    EDITTEXT        IDC_EDIT_POINTMESHK,288,114,84,14,ES_AUTOHSCROLL
+    LTEXT           "参数K: ",IDC_STATIC,259,117,26,8
+    LTEXT           "搜索邻域的大小,过大将造成搜索耗时;\n过小则无法完成重建;一般设为8-16",IDC_STATIC,377,113,134,17
+    LTEXT           "参数A:",IDC_STATIC,259,136,24,8
+    LTEXT           "参数B:",IDC_STATIC,259,154,24,8
+    EDITTEXT        IDC_EDIT_POINTMESHA,288,133,84,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_POINTMESHB,288,152,84,14,ES_AUTOHSCROLL
+    LTEXT           "三角形最小内角所占比重",IDC_STATIC,377,137,89,8
+    LTEXT           "二面角所占比重(面平滑度)",IDC_STATIC,377,154,94,8
+    GROUPBOX        "基于顶点扩展的网格生成参数设置",IDC_STATIC,245,98,273,73
+    GROUPBOX        "自适应球相交的网格生成参数设置",IDC_STATIC,7,98,232,73
+    EDITTEXT        IDC_EDIT_BALLTERR,69,121,69,15,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_BALLTQ,69,144,69,15,ES_AUTOHSCROLL
+    LTEXT           "误差精度：",IDC_STATIC,18,124,41,8
+    LTEXT           "影响域比值：",IDC_STATIC,18,147,49,8
+    LTEXT           "值越小生成的网格越细腻",IDC_STATIC,143,124,89,8
+    LTEXT           "值越大生成的网格越细腻",IDC_STATIC,143,147,89,8
+    LTEXT           "邻域点个数K：",IDC_STATIC,19,26,53,8
+    EDITTEXT        IDC_EDIT_SIMPLYK,99,23,58,14,ES_AUTOHSCROLL
+    LTEXT           "单元网格中点最多M：",IDC_STATIC,19,43,78,8
+    EDITTEXT        IDC_EDIT_SIMPLYM,99,40,58,14,ES_AUTOHSCROLL
+    LTEXT           "取10较好,一般为8~20之间",IDC_STATIC,167,26,93,8
+    LTEXT           "值越大,精简率越大;一般取8~20",IDC_STATIC,167,43,112,8
+    LTEXT           "八叉树精简深度D:",IDC_STATIC,19,60,64,8
+    EDITTEXT        IDC_EDIT_SIMPLYDEEP,99,57,58,14,ES_AUTOHSCROLL
+    LTEXT           "值越大,精简率越小;一般取1-7",IDC_STATIC,167,60,105,8
+    CONTROL         "使用全局设置？",IDC_USEGLOBALSETTING,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,446,277,72,10
 END
 
 
@@ -271,9 +340,9 @@ BEGIN
     IDD_DLG_SIMPLY, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 166
+        RIGHTMARGIN, 292
         TOPMARGIN, 7
-        BOTTOMMARGIN, 85
+        BOTTOMMARGIN, 92
     END
 
     IDD_DLG_BALLMESHSET, DIALOG
@@ -282,6 +351,22 @@ BEGIN
         RIGHTMARGIN, 170
         TOPMARGIN, 7
         BOTTOMMARGIN, 101
+    END
+
+    IDD_DLG_SETK, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 289
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 88
+    END
+
+    IDD_DLG_PARAMSETTING, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 518
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 333
     END
 END
 #endif    // APSTUDIO_INVOKED
