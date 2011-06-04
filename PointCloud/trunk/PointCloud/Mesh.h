@@ -273,11 +273,12 @@ public:
 		m_d = -pt[0]*m_norm[0] - pt[1]*m_norm[1] - pt[2]*m_norm[2];
 	}
 	//@ 计算点point在面上的投影retPt
-	void projectPoint(float retPt[3], const float point[3]) const {
+	float projectPoint(float retPt[3], const float point[3]) const {
 		float len = ptDistToPlane(point);
 		retPt[0] = point[0] - len*a();
 		retPt[1] = point[1] - len*b();
 		retPt[2] = point[2] - len*c();
+		return len;
 	}
 	//@ 计算点到平面的有向距离
 	float ptDistToPlane(const float pt[3]) const {

@@ -9,6 +9,8 @@
 #include "PointCloudDoc.h"
 #include "PointCloudView.h"
 #include "SimplyParamDlg.h"
+#include "Dialog/SetK.h"
+#include "Dialog/ParamSettingDlg.h"
 #include "Common/FileReadPlug.h"
 
 #include "BallMesh/Ball.h"
@@ -44,6 +46,11 @@ BEGIN_MESSAGE_MAP(CPointCloudDoc, CDocument)
 	ON_COMMAND(ID_SHOWPOINT, &CPointCloudDoc::OnShowPoint)
 	ON_COMMAND(ID_SHOWWIRE, &CPointCloudDoc::OnShowWire)
 	ON_COMMAND(ID_POINTMESH2, &CPointCloudDoc::OnPointmesh2)
+	ON_COMMAND(ID_CMPNORMAL, &CPointCloudDoc::OnComputeNormal)
+	ON_COMMAND(ID_ADJUSTNORMAL, &CPointCloudDoc::OnAdjustNormal)
+	ON_UPDATE_COMMAND_UI(ID_CMPNORMAL, &CPointCloudDoc::OnUpdateComputeNormal)
+	ON_UPDATE_COMMAND_UI(ID_ADJUSTNORMAL, &CPointCloudDoc::OnUpdateAdjustNormal)
+	ON_COMMAND(ID_PARAMSETTING, &CPointCloudDoc::OnParamSetting)
 END_MESSAGE_MAP()
 
 // CPointCloudDoc 构造/析构
@@ -64,6 +71,11 @@ CPointCloudDoc::CPointCloudDoc()
 	m_bPoint = false;
 	m_bWire = false;
 	m_bMesh = true;
+
+	m_bCmpNormal = FALSE;
+	m_bAjstNormal = FALSE;
+	m_bUsedGlobalSetting = false;
+	m_paramSet.initParam();
 }
 
 CPointCloudDoc::~CPointCloudDoc()
@@ -126,6 +138,44 @@ void CPointCloudDoc::Dump(CDumpContext& dc) const
 }
 #endif //_DEBUG
 
+void CPointCloudDoc::Draw(){
+	POSITION pos = GetFirstViewPosition();
+	if (!pos) return ;
+	CPointCloudView* pView = (CPointCloudView*)GetNextView(pos);
+	pView->draw();
+}
+
+// 主要的绘制函数
+void CPointCloudDoc::drawData(){
+	POSITION pos = GetFirstViewPosition();
+	if (!pos) return ;
+	CPointCloudView* pView = (CPointCloudView*)GetNextView(pos);
+
+	switch (mode)
+	{
+	case POINTMODE:
+		pView->drawPoint(ps);
+		break;
+	case MESHMODE:
+		pView->drawMesh(m_mesh);
+		break;
+	case POINTMESHMODE:
+		if (m_bPoint)
+			pView->drawPointMesh(m_pointMesh);
+		else
+			pView->drawPointMeshWithoutPoint(m_pointMesh);
+		break;
+
+	case BALLMODE:
+		pView->drawBalls(m_balls);
+		break;
+	case BALLMESHMODE:
+		if (m_bMesh)		pView->drawBallMesh(m_ballMesh);
+		else if (m_bWire)pView->drawBallWire(m_ballMesh);
+		break;
+	}
+}
+
 void CPointCloudDoc::OnFileOpen()
 {
 	String fileExt(_T("All files(*.*)|*.*|"));
@@ -173,46 +223,50 @@ void CPointCloudDoc::OnFileOpen()
 			ps->rescale(30.0f);
 
 		Draw();
+		m_bCmpNormal = FALSE;
+		m_bAjstNormal = FALSE;
 	}
 	delete dlg;
 }
 
-void CPointCloudDoc::Draw(){
-	POSITION pos = GetFirstViewPosition();
-	if (!pos) return ;
-	CPointCloudView* pView = (CPointCloudView*)GetNextView(pos);
-	pView->draw();
+//===============================//
+void CPointCloudDoc::OnComputeNormal()
+{
+	if (ps != NULL && ps->m_normal == NULL){
+		if (!m_bUsedGlobalSetting){
+			CSimplyParamDlg dlg;
+			if (dlg.DoModal() == IDOK){
+				m_paramSet.simplyK = dlg.m_K;
+				m_paramSet.simplyMaxPointSize = dlg.m_M;
+				m_paramSet.simplyMinDeep = dlg.m_Deep;
+			}else{
+				return ;
+			}
+		}
+		ps->computeNormal(m_paramSet.simplyK);// 参数需要设置
+		m_bCmpNormal = TRUE;
+	}
 }
 
-// 主要的绘制函数
-void CPointCloudDoc::drawData(){
-	POSITION pos = GetFirstViewPosition();
-	if (!pos) return ;
-	CPointCloudView* pView = (CPointCloudView*)GetNextView(pos);
-
-	switch (mode)
-	{
-	case POINTMODE:
-		pView->drawPoint(ps);
-		break;
-	case MESHMODE:
-		pView->drawMesh(m_mesh);
-		break;
-	case POINTMESHMODE:
-		if (m_bPoint)
-			pView->drawPointMesh(m_pointMesh);
-		else
-			pView->drawPointMeshWithoutPoint(m_pointMesh);
-		break;
-
-	case BALLMODE:
-		pView->drawBalls(m_balls);
-		break;
-	case BALLMESHMODE:
-		if (m_bMesh)		pView->drawBallMesh(m_ballMesh);
-		else if (m_bWire)pView->drawBallWire(m_ballMesh);
-		break;
+void CPointCloudDoc::OnAdjustNormal()
+{
+	if (ps != NULL ){
+		if (ps->m_normal == NULL){
+			OnComputeNormal();
+		}
+		ps->adjustNormal(m_paramSet.simplyK);// 参数需要设置
+		m_bAjstNormal = TRUE;
 	}
+}
+
+void CPointCloudDoc::OnUpdateComputeNormal(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(!m_bCmpNormal);
+}
+
+void CPointCloudDoc::OnUpdateAdjustNormal(CCmdUI *pCmdUI)
+{
+	pCmdUI->Enable(!m_bAjstNormal);
 }
 
 //====== 均匀网格和曲率精简方法========//
@@ -221,6 +275,8 @@ void CPointCloudDoc::OnEditSimply()
 	CSimplyParamDlg simplyParamDlg;
 	if (simplyParamDlg.DoModal() == IDOK){
 		ps->computeNormalAndSimpled(simplyParamDlg.m_K);
+		m_bCmpNormal = TRUE;
+		m_bAjstNormal = TRUE;
 	}
 	drawData();
 }
@@ -228,7 +284,7 @@ void CPointCloudDoc::OnEditSimply()
 // ========非均匀网格曲率精简=========//
 void CPointCloudDoc::OnOctreeSimply()
 {
-	CSimplyPlugin simplyPlug(ps, 10, 10);
+	CSimplyPlugin simplyPlug(ps, m_paramSet.simplyK, m_paramSet.simplyMaxPointSize);
 	simplyPlug.doSimply();
 	drawData();
 }
@@ -244,9 +300,6 @@ void CPointCloudDoc::OnMesh()
 		m_mesh = new CIPDMesh(ps, pView);
 		mode = MESHMODE;
 		m_mesh->start();
-// 		mesh->faceNormal();
-		//int hole = mesh->checkHoles();
-		//TRACE("There are %d holes!",hole);
 		drawData();
 	}
 }
@@ -255,7 +308,7 @@ void CPointCloudDoc::OnMesh()
 void CPointCloudDoc::OnEditFlip()
 {
 	if (m_pointMesh != NULL){
-// 		mesh->filpFaceNorm();
+ 		//mesh->filpFaceNorm();
 		m_pointMesh->filpNormal();
 		POSITION pos = GetFirstViewPosition();
 		if (!pos) return ;
@@ -290,6 +343,11 @@ void CPointCloudDoc::OnPointMesh(){
 		m_pointMesh = new CPointMesh(ps, pView, 7);
 		m_pointMesh->start();
 		pView->drawPointMesh(m_pointMesh);
+
+		AdjustMeshPlugin clearBadTrianglePlungin;
+		clearBadTrianglePlungin.cleanBadTriangles(m_pointMesh);
+		clearBadTrianglePlungin.adjustTriNormalByPointNormal(m_pointMesh);
+
 	//	m_pointMesh->checkBoundaryPoint();
 	}
 }
@@ -302,21 +360,24 @@ void CPointCloudDoc::OnPointmesh2()
 	if (ps != NULL){
 		if (m_pointMesh!= NULL) delete m_pointMesh;
 		mode = POINTMESHMODE;
-		m_pointMesh = new CPointMesh(ps, pView, 7);
-		//m_pointMesh->m_B = 0.1;
-		m_pointMesh->startT();
-		pView->drawPointMesh(m_pointMesh);
+		CSetK dlg;
+		if (dlg.DoModal() == IDOK){
+			m_pointMesh = new CPointMesh(ps, pView,  dlg.m_K);
+			m_pointMesh->setAB(dlg.m_A, dlg.m_B);
+			//m_pointMesh->m_B = 0.1;
+			m_pointMesh->startT();
+			pView->drawPointMesh(m_pointMesh);
 
-		AdjustMeshPlugin clearBadTrianglePlungin;
-		clearBadTrianglePlungin.cleanBadTriangles(m_pointMesh);
-		clearBadTrianglePlungin.adjustTriNormalByPointNormal(m_pointMesh);
-//		clearBadTrianglePlungin.adjustTriNormal(m_pointMesh);
-		m_pointMesh->checkBoundaryPoint();
+			AdjustMeshPlugin clearBadTrianglePlungin;
+			clearBadTrianglePlungin.cleanBadTriangles(m_pointMesh);
+			clearBadTrianglePlungin.adjustTriNormalByPointNormal(m_pointMesh);
+	//		clearBadTrianglePlungin.adjustTriNormal(m_pointMesh);
+			m_pointMesh->checkBoundaryPoint();
+		}
 	}
 }
 
 // =========自适应球相交的网格生成========= //
-
 void CPointCloudDoc::OnBallMeshNormalAndWeight()
 {
 	if (ps == NULL) return;
@@ -388,4 +449,20 @@ void CPointCloudDoc::OnShowMesh()
 {
 	m_bMesh = true;
 	m_bWire = false;
+}
+
+void CPointCloudDoc::OnParamSetting()
+{
+	CParamSettingDlg settingDlg;
+	if (settingDlg.DoModal()){
+		m_bUsedGlobalSetting = settingDlg.m_bUseGlobalSetting;
+		m_paramSet.simplyK = settingDlg.m_simplyK;
+		m_paramSet.simplyMaxPointSize = settingDlg.m_simplyMaxPointSize;
+		m_paramSet.simplyMinDeep = settingDlg.m_simplyMinDeep;
+		m_paramSet.ballTerr = settingDlg.m_ballTerr;
+		m_paramSet.ballTq = settingDlg.m_ballTq;
+		m_paramSet.pointMeshK = settingDlg.m_pointMeshK;
+		m_paramSet.pointMeshA = settingDlg.m_pointMeshA;
+		m_paramSet.pointMeshB = settingDlg.m_pointMeshB;
+	}
 }

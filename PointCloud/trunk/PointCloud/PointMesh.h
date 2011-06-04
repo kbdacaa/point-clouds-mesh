@@ -3,9 +3,14 @@
 
 #include "PointSet.h"
 #include "Mesh.h"
+#include "Common/sort.h"
 #include <deque>
 using namespace std;
 
+// 计算两个三维向量的点乘
+inline float eCosNoSqrt(const float* a, const float* b){
+	return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]);
+}
 //===== 快速排序算法=使用主键T1排序,T2跟随=======//
 template <class T1, class T2>
 inline int partition(T1* pData,T2* nnidx, int start, int end){
@@ -131,6 +136,10 @@ public:
 		m_faces.clear();
 	}
 
+	void setAB(float a = 1.0, float b = 1.0){
+		m_A = a;	m_B = b;
+	}
+
 public:
 	void start();
 	bool externPoint(size_t index);
@@ -140,6 +149,7 @@ public:
 	float arcNorm(float ptCenter[3], float ptStart[3], float eNorm[3], float pt[3]);
 
 	void sortArc(float* arc, ANNidx* index, int N);
+	void sortArc(float* arc, ANNidx* index, float (*pts)[3], int N);
 	void sortWith(list<size_t>& linkList,const ANNidx* nnIdx, int N);
 
 	void formTriangles(size_t index, ANNidx* indexs, int N);
@@ -173,14 +183,18 @@ protected:
 public:
 	void startT();
 	void externSeedPoint(size_t iSeed);
-	void externSeedTriangles(size_t iSeed, ANNidx* nnIdx, int N);
+	void externSeedTriangles(size_t iSeed, ANNidx* nnIdx, bool* bLinkedCenter, int N);
 	int externFirstTriangle(size_t iSeed, ANNidx* nnIdx,int icur, int N);
+
 	void externFrontPoint(size_t iSeed);
-	void externFrontTriangles(size_t iSeed, ANNidx* nnIdx, int N);
+	void externFrontTriangles(size_t iSeed, ANNidx* nnIdx, bool* bLinkedCenter, int N);
+
 	void triBtwSE(size_t iSeed, size_t iPre, const ANNidx* nnidx, int start, int end, bool* bLinkedCenter);
 	int formOneTriangle(size_t iSeed, size_t iPre, const ANNidx* nnidx, int start, int end, bool* bLinkedCenter);
 	float computeSeedPointFit(float ptSeed[3], float ptCur[3], size_t iNext, float preNorm[3]);
 	float computeSeedPointFit(float ptSeed[3], float ptCur[3], size_t iNext);
+
+	void CleanInPoint(size_t iSeed,ANNidx* nnidx, float (*projPt)[3], bool* bLinked, int N);
 };
 
 //************************************
@@ -224,6 +238,10 @@ inline float CPointMesh::arcNorm(float ptCenter[3], float ptStart[3], float eNor
 //************************************
 inline void CPointMesh::sortArc(float* arc, ANNidx* index, int N){
 	quickSort(arc, index, 1, N);
+}
+
+inline void CPointMesh::sortArc(float* arc, ANNidx* index, float (*pts)[3], int N){
+	quickSort(arc, index, pts, 1, N);
 }
 
 inline bool CPointMesh::satisfyTriRule(const size_t& idxo, const size_t& idxb, const size_t& idxc){

@@ -73,7 +73,7 @@ inline void CSimplyPlugin::doSimply(){
 	//cout<<"°Ë²æÊ÷Ò¶×Ó¸öÊý£º"<<gLeafNodeVector.size()<<endl;
 	vector<LeafNode<int>*>::iterator it = gLeafNodeVector.begin();
 	for (; it != gLeafNodeVector.end(); it++)
-		if ((*it)->level > 4)
+		if ((*it)->level > 5)
 			simplyOctreeCell((*it)->ptIndex);
 
 	delete[] m_ratio;

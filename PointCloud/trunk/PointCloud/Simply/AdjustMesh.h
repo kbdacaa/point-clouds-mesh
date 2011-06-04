@@ -5,11 +5,6 @@
 #include <algorithm>
 using namespace std;
 
-// 计算两个三维向量的点乘
-inline float eCosNoSqrt(const float* a, const float* b){
-	return (a[0]*b[0]+a[1]*b[1]+a[2]*b[2]);
-}
-
 class AdjustMeshPlugin{
 public:
 	size_t m_pointN;
@@ -95,7 +90,7 @@ inline void AdjustMeshPlugin::cleanBadTriangles(CPointMesh* mesh){
     }
     clearDelTris(tris, bTriDel);
 }
-
+// 如果一个三角形的其他两个顶点和中心点都相连一次时，为错误三角形《错误三角形》
 inline void AdjustMeshPlugin::cleanBadTriangle(vector<size_t>& triList, vector<CTriangle>& tris, vector<bool>& bTriDel){
     vector<size_t> ptIndexs;	// 与当前中心点相连的点集
 
@@ -146,6 +141,7 @@ inline void AdjustMeshPlugin::clearDelTris(vector<CTriangle>& tris, vector<bool>
     tris.swap(newTris);
 }
 
+// 使用相连面的法矢直接进行调整面法矢的方向
 inline void AdjustMeshPlugin::adjustTriNormal(CPointMesh* mesh){
 	m_ptLinkTris.clear();
 	m_pointN = mesh->m_ps->getPointSize();
@@ -190,6 +186,7 @@ inline void AdjustMeshPlugin::adjustPtTrisNormal(vector<size_t>& ptTrislink, vec
 	}
 }
 
+// 使用顶点法矢来调整相连面法矢的方向
 inline void AdjustMeshPlugin::adjustTriNormalByPointNormal(CPointMesh* mesh){
 	m_ptLinkTris.clear();
 	m_pointN = mesh->m_ps->getPointSize();

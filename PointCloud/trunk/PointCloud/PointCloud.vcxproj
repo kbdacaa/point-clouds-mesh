@@ -138,6 +138,8 @@
     <ClCompile Include="ANN\kd_tree.cpp" />
     <ClCompile Include="ANN\kd_util.cpp" />
     <ClCompile Include="Common\tracealloc.cpp" />
+    <ClCompile Include="Dialog\ParamSettingDlg.cpp" />
+    <ClCompile Include="Dialog\SetK.cpp" />
     <ClCompile Include="FtpMesh.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="Mesh.cpp" />
@@ -171,6 +173,9 @@
     <ClInclude Include="CellData.h" />
     <ClInclude Include="Common\FileReadPlug.h" />
     <ClInclude Include="Common\Otree.h" />
+    <ClInclude Include="Common\sort.h" />
+    <ClInclude Include="Dialog\ParamSettingDlg.h" />
+    <ClInclude Include="Dialog\SetK.h" />
     <ClInclude Include="FtpMesh.h" />
     <ClInclude Include="NumericalC\jacobi.h" />
     <ClInclude Include="ANN\kd_fix_rad_search.h" />
